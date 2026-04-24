@@ -812,22 +812,50 @@ class _StatusScaffold extends StatelessWidget {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.user, required this.profile});
 
   final User user;
   final Map<String, dynamic> profile;
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
-    final username = (profile['username'] as String?)?.trim();
-    final goals = (profile['fitnessGoals'] as String?)?.trim();
-    final stats = (profile['personalStats'] as String?)?.trim();
+    final username = (widget.profile['username'] as String?)?.trim();
     final displayName = (username != null && username.isNotEmpty)
         ? username
-        : (user.displayName?.trim().isNotEmpty == true
-              ? user.displayName!.trim()
-              : user.email ?? 'Athlete');
+        : (widget.user.displayName?.trim().isNotEmpty == true
+              ? widget.user.displayName!.trim()
+              : widget.user.email ?? 'Athlete');
+
+    final pages = [
+      _DashboardHome(
+        displayName: displayName,
+        goals: (widget.profile['fitnessGoals'] as String?)?.trim(),
+      ),
+      const _PlaceholderTab(
+        title: 'Workout',
+        description: 'Workout logging will plug in here next.',
+        icon: Icons.add_circle_outline,
+      ),
+      const _PlaceholderTab(
+        title: 'Notifications',
+        description:
+            'Alerts, reminders, and feedback updates will appear here.',
+        icon: Icons.notifications_none_rounded,
+      ),
+      _ProfileTab(
+        displayName: displayName,
+        email: widget.user.email ?? '',
+        stats: (widget.profile['personalStats'] as String?)?.trim(),
+      ),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -835,64 +863,504 @@ class DashboardScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         foregroundColor: const Color(0xFF5B6472),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.menu_rounded),
+            tooltip: 'Menu',
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFD7DCE3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back, $displayName',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF5B6472),
-                    ),
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: KeyedSubtree(
+            key: ValueKey(_selectedIndex),
+            child: pages[_selectedIndex],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        decoration: BoxDecoration(
+          color: const Color(0xFF959DA8),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1A000000),
+              blurRadius: 16,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  icon: Icons.home_rounded,
+                  label: 'Home',
+                  isSelected: _selectedIndex == 0,
+                  onTap: () => setState(() => _selectedIndex = 0),
+                ),
+                _NavItem(
+                  icon: Icons.add_circle,
+                  label: 'Workout',
+                  isSelected: _selectedIndex == 1,
+                  onTap: () => setState(() => _selectedIndex = 1),
+                ),
+                _NavItem(
+                  icon: Icons.notifications_rounded,
+                  label: 'Alerts',
+                  isSelected: _selectedIndex == 2,
+                  onTap: () => setState(() => _selectedIndex = 2),
+                ),
+                _NavItem(
+                  icon: Icons.person_rounded,
+                  label: 'Profile',
+                  isSelected: _selectedIndex == 3,
+                  onTap: () => setState(() => _selectedIndex = 3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardHome extends StatelessWidget {
+  const _DashboardHome({required this.displayName, this.goals});
+
+  final String displayName;
+  final String? goals;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = (goals != null && goals!.isNotEmpty)
+        ? goals!
+        : 'Stay consistent this week and keep your momentum moving.';
+
+    const feedItems = [
+      _MockFeedPost(username: 'User123', caption: 'Great session today!'),
+      _MockFeedPost(
+        username: 'LiftQueen',
+        caption: 'Leg day complete. Feeling strong.',
+      ),
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Welcome back, $displayName',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF5B6472),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+          ),
+          const SizedBox(height: 18),
+          _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Today's Workout",
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF5B6472),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    goals != null && goals.isNotEmpty
-                        ? goals
-                        : 'Your profile is ready. Next up we can build workout tracking and dashboard cards.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF7B8492),
-                    ),
-                  ),
-                  if (stats != null && stats.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Personal stats',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF5B6472),
+                ),
+                const SizedBox(height: 10),
+                const Divider(height: 1, color: Color(0xFFD8DCE4)),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Calories Burned',
+                        value: '350',
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      stats,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF7B8492),
-                      ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _MetricTile(label: 'Reps Completed', value: '120'),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: () => FirebaseAuth.instance.signOut(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF929AA6),
-                    ),
-                    child: const Text('Log Out'),
+                ),
+                const SizedBox(height: 16),
+                _PrimaryButton(
+                  label: 'Start Workout',
+                  isLoading: false,
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Social Feed',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF5B6472),
                   ),
-                ],
+                ),
+                const SizedBox(height: 14),
+                ...feedItems.map((post) => _FeedPostCard(post: post)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFD7DCE3)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F5F8),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF5B6472),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF7B8492)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MockFeedPost {
+  const _MockFeedPost({required this.username, required this.caption});
+
+  final String username;
+  final String caption;
+}
+
+class _FeedPostCard extends StatelessWidget {
+  const _FeedPostCard({required this.post});
+
+  final _MockFeedPost post;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE0E4EA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 15,
+                backgroundColor: Color(0xFFD0D5DD),
+                child: Icon(Icons.person, size: 16, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                post.username,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF5B6472),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            height: 150,
+            width: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD9DDE3),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              'Workout Pic',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            post.caption,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: const Color(0xFF5B6472),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFD8DCE4)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const [
+              _PostAction(icon: Icons.thumb_up_alt_outlined, label: 'Like'),
+              _PostAction(icon: Icons.mode_comment_outlined, label: 'Comment'),
+              _PostAction(icon: Icons.reply_rounded, label: 'Share'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PostAction extends StatelessWidget {
+  const _PostAction({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF818A98)),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF818A98)),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlaceholderTab extends StatelessWidget {
+  const _PlaceholderTab({
+    required this.title,
+    required this.description,
+    required this.icon,
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: _SectionCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 42, color: const Color(0xFF8E96A3)),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF5B6472),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: const Color(0xFF7B8492),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileTab extends StatelessWidget {
+  const _ProfileTab({
+    required this.displayName,
+    required this.email,
+    required this.stats,
+  });
+
+  final String displayName;
+  final String email;
+  final String? stats;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(18),
+      child: _SectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Color(0xFFD0D5DD),
+                  child: Icon(Icons.person, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF5B6472),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF7B8492),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (stats != null && stats!.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Text(
+                'Personal stats',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF5B6472),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                stats!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF7B8492),
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            _PrimaryButton(
+              label: 'Log Out',
+              isLoading: false,
+              onPressed: () => FirebaseAuth.instance.signOut(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0x26FFFFFF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: isSelected ? 30 : 26),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
