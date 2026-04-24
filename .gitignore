@@ -1,0 +1,17 @@
+.DS_Store
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+
+# Flutter/Dart generated files
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# IDE files
+.idea/
+*.iml
+.vscode/
