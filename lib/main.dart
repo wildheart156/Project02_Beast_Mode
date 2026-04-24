@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -47,9 +48,13 @@ class BeastModeApp extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
+          hintStyle: const TextStyle(
+            color: Color(0xFFAAB1BC),
+            fontWeight: FontWeight.w400,
+          ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
-            vertical: 16,
+            vertical: 13,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -77,18 +82,47 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
+          return const _LoadingScaffold(message: 'Checking your session...');
         }
 
-        if (snapshot.hasData) {
-          return DashboardScreen(user: snapshot.data!);
+        final user = authSnapshot.data;
+        if (user == null) {
+          return const AuthScreen();
         }
 
-        return const AuthScreen();
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('Users')
+              .doc(user.uid)
+              .snapshots(),
+          builder: (context, profileSnapshot) {
+            if (profileSnapshot.hasError) {
+              return _StatusScaffold(
+                title: 'Profile Unavailable',
+                message:
+                    'We signed you in, but your profile could not be loaded yet.',
+                actionLabel: 'Log Out',
+                onPressed: () => FirebaseAuth.instance.signOut(),
+              );
+            }
+
+            if (profileSnapshot.connectionState == ConnectionState.waiting) {
+              return const _LoadingScaffold(message: 'Loading your profile...');
+            }
+
+            final document = profileSnapshot.data;
+            if (document == null || !document.exists) {
+              return ProfileSetupScreen(user: user);
+            }
+
+            return DashboardScreen(
+              user: user,
+              profile: document.data() ?? <String, dynamic>{},
+            );
+          },
+        );
       },
     );
   }
@@ -210,6 +244,8 @@ class _AuthScreenState extends State<AuthScreen> {
         return 'That email is already connected to an account.';
       case 'weak-password':
         return 'Use a stronger password with at least 6 characters.';
+      case 'configuration-not-found':
+        return 'Email/password authentication is not enabled in Firebase yet.';
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
@@ -373,6 +409,216 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
+class ProfileSetupScreen extends StatefulWidget {
+  const ProfileSetupScreen({super.key, required this.user});
+
+  final User user;
+
+  @override
+  State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
+}
+
+class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _usernameController;
+  final _goalsController = TextEditingController();
+  final _statsController = TextEditingController();
+
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController(
+      text: widget.user.displayName ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _goalsController.dispose();
+    _statsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => _isSaving = true);
+
+    final username = _usernameController.text.trim();
+    final fitnessGoals = _goalsController.text.trim();
+    final personalStats = _statsController.text.trim();
+
+    try {
+      await widget.user.updateDisplayName(username);
+
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(widget.user.uid)
+          .set({
+            'userId': widget.user.uid,
+            'email': widget.user.email,
+            'username': username,
+            'fitnessGoals': fitnessGoals,
+            'personalStats': personalStats,
+            'profileImageURL': '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+    } on FirebaseException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message ?? 'We could not save your profile yet.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile Setup'),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFF5B6472),
+        actions: [
+          TextButton(
+            onPressed: _isSaving ? null : () => FirebaseAuth.instance.signOut(),
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F9FB),
+                  border: Border.all(color: const Color(0xFFD0D5DD)),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Finish your athlete profile',
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF5B6472),
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Set the basics now so your dashboard and workout data can feel personal from the start.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF7B8492),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFD7DCE3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _usernameController.text,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF5B6472),
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.user.email ?? '',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: const Color(0xFF7B8492)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _goalsController,
+                        minLines: 2,
+                        maxLines: 3,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Add at least one fitness goal.';
+                          }
+                          return null;
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Fitness goals',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _statsController,
+                        minLines: 2,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          hintText: 'Personal stats (optional)',
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _PrimaryButton(
+                        label: 'Save Profile',
+                        isLoading: _isSaving,
+                        onPressed: _saveProfile,
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFD7DCE3)),
+                        ),
+                        child: Text(
+                          'Your goals help Beast Mode tailor your dashboard, workout feedback, and progress tracking from day one.',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: const Color(0xFF7B8492)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AuthCard extends StatelessWidget {
   const _AuthCard({
     super.key,
@@ -482,16 +728,106 @@ class _PrimaryButton extends StatelessWidget {
   }
 }
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key, required this.user});
+class _LoadingScaffold extends StatelessWidget {
+  const _LoadingScaffold({required this.message});
 
-  final User user;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user.displayName?.trim().isNotEmpty == true
-        ? user.displayName!.trim()
-        : user.email ?? 'Athlete';
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(message),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusScaffold extends StatelessWidget {
+  const _StatusScaffold({
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onPressed,
+  });
+
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFD7DCE3)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF5B6472),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    message,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF7B8492),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _PrimaryButton(
+                    label: actionLabel,
+                    isLoading: false,
+                    onPressed: onPressed,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key, required this.user, required this.profile});
+
+  final User user;
+  final Map<String, dynamic> profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final username = (profile['username'] as String?)?.trim();
+    final goals = (profile['fitnessGoals'] as String?)?.trim();
+    final stats = (profile['personalStats'] as String?)?.trim();
+    final displayName = (username != null && username.isNotEmpty)
+        ? username
+        : (user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : user.email ?? 'Athlete');
 
     return Scaffold(
       appBar: AppBar(
@@ -524,11 +860,30 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your login and registration flow is now connected to Firebase Auth.',
+                    goals != null && goals.isNotEmpty
+                        ? goals
+                        : 'Your profile is ready. Next up we can build workout tracking and dashboard cards.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF7B8492),
                     ),
                   ),
+                  if (stats != null && stats.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Personal stats',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF5B6472),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      stats,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF7B8492),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: () => FirebaseAuth.instance.signOut(),
