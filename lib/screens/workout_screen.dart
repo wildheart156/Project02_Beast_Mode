@@ -82,7 +82,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     if (intensity >= 80) {
       return 'Strong workout balance. You are building good consistency.';
     }
-    return 'Lighter workout logged. Keep the habit going and build from here.';
+    if (intensity >= 1) {
+      return 'Lighter workout logged. Keep the habit going and build from here.';
+    }
+    return 'Add an exercise to see live workout feedback.';
   }
 
   bool _hasAtLeastOneValidExercise() {
