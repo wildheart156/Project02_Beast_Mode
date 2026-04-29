@@ -7,6 +7,7 @@ class WorkoutSession {
     required this.exerciseCount,
     required this.exercises,
     required this.intensityScore,
+    required this.estimatedCaloriesBurned,
     required this.feedback,
     required this.source,
     required this.createdAt,
@@ -17,6 +18,7 @@ class WorkoutSession {
   final int exerciseCount;
   final List<Map<String, dynamic>> exercises;
   final double intensityScore;
+  final int estimatedCaloriesBurned;
   final String feedback;
   final String source;
   final DateTime createdAt;
@@ -27,6 +29,7 @@ class WorkoutSession {
       'exerciseCount': exerciseCount,
       'exercises': exercises,
       'intensityScore': intensityScore,
+      'estimatedCaloriesBurned': estimatedCaloriesBurned,
       'feedback': feedback,
       'source': source,
       'createdAt': FieldValue.serverTimestamp(),
@@ -48,6 +51,8 @@ class WorkoutSession {
           .map((exercise) => Map<String, dynamic>.from(exercise))
           .toList(),
       intensityScore: (data['intensityScore'] as num?)?.toDouble() ?? 0,
+      estimatedCaloriesBurned:
+          (data['estimatedCaloriesBurned'] as num?)?.toInt() ?? 0,
       feedback: (data['feedback'] as String?) ?? '',
       source: (data['source'] as String?) ?? 'manual_api',
       createdAt: timestamp is Timestamp
@@ -61,6 +66,7 @@ class WorkoutSession {
     required String userId,
     required List<Map<String, dynamic>> exercises,
     required double intensityScore,
+    required int estimatedCaloriesBurned,
     required String feedback,
   }) {
     return WorkoutSession(
@@ -69,6 +75,7 @@ class WorkoutSession {
       exerciseCount: exercises.length,
       exercises: exercises,
       intensityScore: intensityScore,
+      estimatedCaloriesBurned: estimatedCaloriesBurned,
       feedback: feedback,
       source: 'manual_api',
       createdAt: DateTime.now(),

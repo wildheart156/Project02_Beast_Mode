@@ -59,6 +59,22 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     return double.parse((totalVolume / 50).toStringAsFixed(1));
   }
 
+  int _calculateEstimatedCalories(List<Map<String, dynamic>> exercises) {
+    double baseCalories = 0;
+
+    for (final exercise in exercises) {
+      final sets = (exercise['sets'] as num?)?.toDouble() ?? 0;
+      final reps = (exercise['reps'] as num?)?.toDouble() ?? 0;
+      final rawWeight = (exercise['weight'] as num?)?.toDouble() ?? 0;
+      final effectiveWeight = rawWeight <= 0 ? 1 : rawWeight;
+      final volumeScore = (sets * reps * effectiveWeight) / 25;
+      baseCalories += volumeScore < 3 ? 3 : volumeScore;
+    }
+
+    final workoutBonus = exercises.length * 8;
+    return (baseCalories + workoutBonus).round();
+  }
+
   String _getFeedback(double intensity) {
     if (intensity >= 180) {
       return 'High intensity session. Great work, but make sure recovery stays part of the plan.';
@@ -104,6 +120,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         .map((draft) => draft.toMap())
         .toList(growable: false);
     final intensity = _calculateIntensity(_drafts);
+    final estimatedCaloriesBurned = _calculateEstimatedCalories(exercises);
     final feedback = _getFeedback(intensity);
 
     try {
@@ -112,6 +129,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         userId: user.uid,
         exercises: exercises,
         intensityScore: intensity,
+        estimatedCaloriesBurned: estimatedCaloriesBurned,
         feedback: feedback,
       );
       final workoutId = await _workoutRepository.saveWorkout(
@@ -129,6 +147,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           userId: user.uid,
           exercises: exercises,
           intensityScore: intensity,
+          estimatedCaloriesBurned: estimatedCaloriesBurned,
           feedback: feedback,
         );
         _view = _WorkoutView.summary;
@@ -190,6 +209,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final intensity = _calculateIntensity(
       activeDrafts.isEmpty ? _drafts : activeDrafts,
     );
+    final estimatedCaloriesBurned = _calculateEstimatedCalories(
+      activeDrafts
+          .where(
+            (draft) =>
+                draft.name.isNotEmpty && draft.sets >= 1 && draft.reps >= 1,
+          )
+          .map((draft) => draft.toMap())
+          .toList(growable: false),
+    );
     final feedback = _getFeedback(intensity);
     final user = FirebaseAuth.instance.currentUser;
 
@@ -226,6 +254,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           formKey: _formKey,
                           drafts: _drafts,
                           intensity: intensity,
+                          estimatedCaloriesBurned: estimatedCaloriesBurned,
                           feedback: feedback,
                           isSaving: _isSaving,
                           onAddExercise: _addExercise,
@@ -320,6 +349,7 @@ class _WorkoutBuilderView extends StatelessWidget {
     required this.formKey,
     required this.drafts,
     required this.intensity,
+    required this.estimatedCaloriesBurned,
     required this.feedback,
     required this.isSaving,
     required this.onAddExercise,
@@ -331,6 +361,7 @@ class _WorkoutBuilderView extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final List<WorkoutExerciseDraft> drafts;
   final double intensity;
+  final int estimatedCaloriesBurned;
   final String feedback;
   final bool isSaving;
   final VoidCallback onAddExercise;
@@ -345,7 +376,11 @@ class _WorkoutBuilderView extends StatelessWidget {
       child: ListView(
         key: const ValueKey('builder-list'),
         children: [
-          _WorkoutFeedbackCard(intensity: intensity, feedback: feedback),
+          _WorkoutFeedbackCard(
+            intensity: intensity,
+            estimatedCaloriesBurned: estimatedCaloriesBurned,
+            feedback: feedback,
+          ),
           const SizedBox(height: 16),
           if (drafts.isEmpty)
             const _WorkoutMessageCard(
@@ -412,9 +447,14 @@ class _WorkoutBuilderView extends StatelessWidget {
 }
 
 class _WorkoutFeedbackCard extends StatelessWidget {
-  const _WorkoutFeedbackCard({required this.intensity, required this.feedback});
+  const _WorkoutFeedbackCard({
+    required this.intensity,
+    required this.estimatedCaloriesBurned,
+    required this.feedback,
+  });
 
   final double intensity;
+  final int estimatedCaloriesBurned;
   final String feedback;
 
   @override
@@ -439,6 +479,14 @@ class _WorkoutFeedbackCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Intensity Score: ${intensity.toStringAsFixed(1)}',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF5B6472),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Estimated Calories Burned: $estimatedCaloriesBurned',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: const Color(0xFF5B6472),
@@ -644,6 +692,14 @@ class _WorkoutSummaryView extends StatelessWidget {
                   color: const Color(0xFF7B8492),
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                'Estimated Calories Burned: ${workout!.estimatedCaloriesBurned}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF5B6472),
+                ),
+              ),
               const SizedBox(height: 14),
               Text(
                 workout!.feedback,
@@ -845,7 +901,7 @@ class _WorkoutHistoryCard extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 6),
           child: Text(
-            '${workout.exerciseCount} exercises • Intensity ${workout.intensityScore.toStringAsFixed(1)}\n${workout.feedback}',
+            '${workout.exerciseCount} exercises • Intensity ${workout.intensityScore.toStringAsFixed(1)} • ${workout.estimatedCaloriesBurned} cal\n${workout.feedback}',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
