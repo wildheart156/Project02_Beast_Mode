@@ -33,6 +33,39 @@ class WorkoutRepository {
     return workoutRef.id;
   }
 
+  Future<void> updateWorkout({
+    required String userId,
+    required WorkoutSession workout,
+  }) async {
+    await _firestore
+        .collection('Users')
+        .doc(userId)
+        .collection('Workouts')
+        .doc(workout.id)
+        .set({
+          'userId': workout.userId,
+          'exerciseCount': workout.exerciseCount,
+          'exercises': workout.exercises,
+          'intensityScore': workout.intensityScore,
+          'estimatedCaloriesBurned': workout.estimatedCaloriesBurned,
+          'feedback': workout.feedback,
+          'source': workout.source,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+  }
+
+  Future<void> deleteWorkout({
+    required String userId,
+    required String workoutId,
+  }) async {
+    await _firestore
+        .collection('Users')
+        .doc(userId)
+        .collection('Workouts')
+        .doc(workoutId)
+        .delete();
+  }
+
   Stream<List<WorkoutSession>> workoutHistory(String userId) {
     return _firestore
         .collection('Users')

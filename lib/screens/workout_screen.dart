@@ -23,6 +23,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   _WorkoutView _view = _WorkoutView.builder;
   bool _isSaving = false;
+  bool _isHydratingDrafts = false;
   WorkoutSession? _latestWorkout;
 
   @override
@@ -97,6 +98,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Future<void> _finishWorkout() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign in again to save workouts.')),
+      );
       return;
     }
 
@@ -127,18 +131,33 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final feedback = _getFeedback(intensity);
 
     try {
+      final editingWorkoutId =
+          _latestWorkout != null && _view == _WorkoutView.builder
+          ? _latestWorkout!.id
+          : '';
       final pendingWorkout = WorkoutSession.fromLocal(
-        id: '',
+        id: editingWorkoutId,
         userId: user.uid,
         exercises: exercises,
         intensityScore: intensity,
         estimatedCaloriesBurned: estimatedCaloriesBurned,
         feedback: feedback,
       );
-      final workoutId = await _workoutRepository.saveWorkout(
-        userId: user.uid,
-        workout: pendingWorkout,
-      );
+      final isEditingExistingWorkout = editingWorkoutId.isNotEmpty;
+      late final String workoutId;
+
+      if (isEditingExistingWorkout) {
+        await _workoutRepository.updateWorkout(
+          userId: user.uid,
+          workout: pendingWorkout,
+        );
+        workoutId = editingWorkoutId;
+      } else {
+        workoutId = await _workoutRepository.saveWorkout(
+          userId: user.uid,
+          workout: pendingWorkout,
+        );
+      }
 
       if (!mounted) {
         return;
@@ -155,6 +174,16 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         );
         _view = _WorkoutView.summary;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEditingExistingWorkout
+                ? 'Workout updated successfully.'
+                : 'Workout saved successfully.',
+          ),
+        ),
+      );
     } catch (error) {
       if (!mounted) {
         return;
@@ -183,6 +212,51 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _latestWorkout = null;
       _view = _WorkoutView.builder;
     });
+  }
+
+  Future<void> _loadWorkoutForEditing(WorkoutSession workout) async {
+    setState(() => _isHydratingDrafts = true);
+
+    try {
+      for (final draft in _drafts) {
+        draft.dispose();
+      }
+
+      final hydratedDrafts = workout.exercises
+          .map((exercise) {
+            return WorkoutExerciseDraft(
+              id: DateTime.now().microsecondsSinceEpoch.toString(),
+              name: (exercise['name'] as String?) ?? '',
+              apiExerciseId: (exercise['apiExerciseId'] as num?)?.toInt(),
+              sets: ((exercise['sets'] as num?)?.toInt() ?? 0).toString(),
+              reps: ((exercise['reps'] as num?)?.toInt() ?? 0).toString(),
+              weight: ((exercise['weight'] as num?)?.toDouble() ?? 0)
+                  .toString(),
+              notes: (exercise['notes'] as String?) ?? '',
+            );
+          })
+          .toList(growable: false);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _drafts
+          ..clear()
+          ..addAll(hydratedDrafts);
+        _latestWorkout = workout;
+        _view = _WorkoutView.builder;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Workout loaded into the builder.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isHydratingDrafts = false);
+      }
+    }
   }
 
   Future<void> _openExerciseSearch(WorkoutExerciseDraft draft) async {
@@ -259,7 +333,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           intensity: intensity,
                           estimatedCaloriesBurned: estimatedCaloriesBurned,
                           feedback: feedback,
-                          isSaving: _isSaving,
+                          isSaving: _isSaving || _isHydratingDrafts,
                           onAddExercise: _addExercise,
                           onRemoveExercise: _removeExercise,
                           onSearchExercise: _openExerciseSearch,
@@ -277,6 +351,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           key: const ValueKey('history'),
                           userId: user.uid,
                           repository: _workoutRepository,
+                          onEditWorkout: _loadWorkoutForEditing,
                         ),
                       },
                     ),
@@ -385,6 +460,11 @@ class _WorkoutBuilderView extends StatelessWidget {
             feedback: feedback,
           ),
           const SizedBox(height: 16),
+          if (isSaving)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: LinearProgressIndicator(),
+            ),
           if (drafts.isEmpty)
             const _WorkoutMessageCard(
               title: 'No exercises added yet',
@@ -831,10 +911,12 @@ class _WorkoutHistoryView extends StatelessWidget {
     super.key,
     required this.userId,
     required this.repository,
+    required this.onEditWorkout,
   });
 
   final String userId;
   final WorkoutRepository repository;
+  final Future<void> Function(WorkoutSession workout) onEditWorkout;
 
   @override
   Widget build(BuildContext context) {
@@ -868,7 +950,33 @@ class _WorkoutHistoryView extends StatelessWidget {
             final workout = workouts[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: _WorkoutHistoryCard(workout: workout),
+              child: _WorkoutHistoryCard(
+                workout: workout,
+                onEditWorkout: () => onEditWorkout(workout),
+                onDeleteWorkout: () async {
+                  try {
+                    await repository.deleteWorkout(
+                      userId: userId,
+                      workoutId: workout.id,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Workout deleted.')),
+                      );
+                    }
+                  } catch (_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'We could not delete that workout right now.',
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
             );
           },
         );
@@ -878,9 +986,15 @@ class _WorkoutHistoryView extends StatelessWidget {
 }
 
 class _WorkoutHistoryCard extends StatelessWidget {
-  const _WorkoutHistoryCard({required this.workout});
+  const _WorkoutHistoryCard({
+    required this.workout,
+    required this.onEditWorkout,
+    required this.onDeleteWorkout,
+  });
 
   final WorkoutSession workout;
+  final Future<void> Function() onEditWorkout;
+  final Future<void> Function() onDeleteWorkout;
 
   @override
   Widget build(BuildContext context) {
@@ -909,6 +1023,53 @@ class _WorkoutHistoryCard extends StatelessWidget {
               context,
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
           ),
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) async {
+            if (value == 'edit') {
+              await onEditWorkout();
+              return;
+            }
+
+            if (value == 'delete') {
+              final shouldDelete = await showDialog<bool>(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Delete Workout'),
+                    content: const Text(
+                      'Are you sure you want to delete this workout from your history?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (!context.mounted) {
+                return;
+              }
+
+              if (shouldDelete == true) {
+                await onDeleteWorkout();
+              }
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem<String>(value: 'edit', child: Text('Edit Workout')),
+            PopupMenuItem<String>(
+              value: 'delete',
+              child: Text('Delete Workout'),
+            ),
+          ],
         ),
         children: workout.exercises
             .map((exercise) => _SummaryExerciseTile(exercise: exercise))
