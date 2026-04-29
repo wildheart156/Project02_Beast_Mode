@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'screens/workout_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -997,15 +998,12 @@ class _DashboardHome extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _MetricTile(label: 'Reps Completed', value: '120'),
+                      child: _MetricTile(
+                        label: 'Reps Completed',
+                        value: '120',
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                _PrimaryButton(
-                  label: 'Start Workout',
-                  isLoading: false,
-                  onPressed: () {},
                 ),
               ],
             ),
