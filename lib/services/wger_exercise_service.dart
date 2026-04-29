@@ -34,7 +34,7 @@ class WgerExerciseService {
     }
 
     final uri = Uri.parse(
-      'https://wger.de/api/v2/exercise/?language=2&limit=200',
+      'https://wger.de/api/v2/exerciseinfo/?language=2&limit=200',
     );
     final response = await _client.get(
       uri,
