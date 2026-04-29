@@ -46,4 +46,27 @@ class WorkoutRepository {
               .toList(growable: false),
         );
   }
+
+  Stream<List<WorkoutSession>> todaysWorkouts(String userId) {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final startOfNextDay = startOfDay.add(const Duration(days: 1));
+
+    return _firestore
+        .collection('Users')
+        .doc(userId)
+        .collection('Workouts')
+        .where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where('createdAt', isLessThan: Timestamp.fromDate(startOfNextDay))
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(WorkoutSession.fromDocument)
+              .toList(growable: false),
+        );
+  }
 }
