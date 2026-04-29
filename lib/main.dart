@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:beast_mode_fitness/screens/notifications_screen.dart';
+import 'package:beast_mode_fitness/screens/profile_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -851,11 +852,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Alerts, reminders, and feedback updates will appear here.',
         icon: Icons.notifications_none_rounded,
       ),
-      _ProfileTab(
-        displayName: displayName,
-        email: widget.user.email ?? '',
-        stats: (widget.profile['personalStats'] as String?)?.trim(),
-      ),
+      ProfileScreen(user: widget.user, profile: widget.profile),
     ];
 
     return Scaffold(
@@ -998,10 +995,7 @@ class _DashboardHome extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _MetricTile(
-                        label: 'Reps Completed',
-                        value: '120',
-                      ),
+                      child: _MetricTile(label: 'Reps Completed', value: '120'),
                     ),
                   ],
                 ),
@@ -1198,6 +1192,7 @@ class _PostAction extends StatelessWidget {
 
 class WorkoutScreen extends StatelessWidget {
   const WorkoutScreen({
+    super.key,
     required this.title,
     required this.description,
     required this.icon,
@@ -1238,86 +1233,6 @@ class WorkoutScreen extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileTab extends StatelessWidget {
-  const _ProfileTab({
-    required this.displayName,
-    required this.email,
-    required this.stats,
-  });
-
-  final String displayName;
-  final String email;
-  final String? stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(18),
-      child: _SectionCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Color(0xFFD0D5DD),
-                  child: Icon(Icons.person, color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF5B6472),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        email,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF7B8492),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (stats != null && stats!.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Text(
-                'Personal stats',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                stats!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF7B8492),
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            _PrimaryButton(
-              label: 'Log Out',
-              isLoading: false,
-              onPressed: () => FirebaseAuth.instance.signOut(),
-            ),
-          ],
         ),
       ),
     );
