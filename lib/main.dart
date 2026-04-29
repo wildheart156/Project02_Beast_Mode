@@ -4,6 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:beast_mode_fitness/screens/notifications_screen.dart';
 import 'package:beast_mode_fitness/screens/profile_screen.dart';
+import 'package:beast_mode_fitness/screens/workout_screen.dart';
+import 'package:beast_mode_fitness/models/workout_session.dart';
+import 'package:beast_mode_fitness/services/workout_repository.dart';
 
 import 'firebase_options.dart';
 
@@ -838,14 +841,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final pages = [
       _DashboardHome(
+        userId: widget.user.uid,
         displayName: displayName,
         goals: (widget.profile['fitnessGoals'] as String?)?.trim(),
+        onOpenWorkoutTab: () => setState(() => _selectedIndex = 1),
       ),
-      const WorkoutScreen(
-        title: 'Workout',
-        description: 'Workout logging will plug in here next.',
-        icon: Icons.add_circle_outline,
-      ),
+      const WorkoutScreen(),
       const NotificationsScreen(
         title: 'Notifications',
         description:
@@ -932,9 +933,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _DashboardHome extends StatelessWidget {
-  const _DashboardHome({required this.displayName, this.goals});
+  const _DashboardHome({
+    required this.userId,
+    required this.displayName,
+    required this.onOpenWorkoutTab,
+    this.goals,
+  });
 
+  final String userId;
   final String displayName;
+  final VoidCallback onOpenWorkoutTab;
   final String? goals;
 
   @override
@@ -971,36 +979,9 @@ class _DashboardHome extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
           ),
           const SizedBox(height: 18),
-          _SectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Today's Workout",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF5B6472),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFFD8DCE4)),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _MetricTile(
-                        label: 'Calories Burned',
-                        value: '350',
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _MetricTile(label: 'Reps Completed', value: '120'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          _TodaysWorkoutCard(
+            userId: userId,
+            onOpenWorkoutTab: onOpenWorkoutTab,
           ),
           const SizedBox(height: 16),
           _SectionCard(
@@ -1078,6 +1059,138 @@ class _MetricTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TodaysWorkoutCard extends StatelessWidget {
+  const _TodaysWorkoutCard({
+    required this.userId,
+    required this.onOpenWorkoutTab,
+  });
+
+  final String userId;
+  final VoidCallback onOpenWorkoutTab;
+
+  @override
+  Widget build(BuildContext context) {
+    final repository = WorkoutRepository();
+
+    return StreamBuilder<List<WorkoutSession>>(
+      stream: repository.todaysWorkouts(userId),
+      builder: (context, snapshot) {
+        final workouts = snapshot.data ?? const <WorkoutSession>[];
+        final totalCalories = workouts.fold<int>(
+          0,
+          (runningTotal, workout) =>
+              runningTotal + workout.estimatedCaloriesBurned,
+        );
+        final totalReps = workouts.fold<int>(0, (runningTotal, workout) {
+          final repsForWorkout = workout.exercises.fold<int>(0, (
+            exerciseRunningTotal,
+            exercise,
+          ) {
+            final sets = (exercise['sets'] as num?)?.toInt() ?? 0;
+            final reps = (exercise['reps'] as num?)?.toInt() ?? 0;
+            return exerciseRunningTotal + (sets * reps);
+          });
+          return runningTotal + repsForWorkout;
+        });
+        final workoutCount = workouts.length;
+
+        return _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Today's Workout",
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF5B6472),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFD8DCE4)),
+              const SizedBox(height: 14),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (snapshot.hasError)
+                Text(
+                  'We could not load today\'s workout summary right now.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF7B8492),
+                  ),
+                )
+              else if (workoutCount == 0) ...[
+                Text(
+                  'No workout logged yet today. Start a session to see your calories and reps here.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF7B8492),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: onOpenWorkoutTab,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF929AA6),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Start Workout'),
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Calories Burned',
+                        value: '$totalCalories',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Reps Completed',
+                        value: '$totalReps',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  workoutCount == 1
+                      ? '1 workout logged today'
+                      : '$workoutCount workouts logged today',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF7B8492),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: onOpenWorkoutTab,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF929AA6),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Open Workout'),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1186,55 +1299,6 @@ class _PostAction extends StatelessWidget {
           ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF818A98)),
         ),
       ],
-    );
-  }
-}
-
-class WorkoutScreen extends StatelessWidget {
-  const WorkoutScreen({
-    super.key,
-    required this.title,
-    required this.description,
-    required this.icon,
-  });
-
-  final String title;
-  final String description;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: _SectionCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 42, color: const Color(0xFF8E96A3)),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF5B6472),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF7B8492),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
