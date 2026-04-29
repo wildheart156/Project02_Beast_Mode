@@ -76,7 +76,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           ...exercises.asMap().entries.map((entry) {
-            int i = entry.key;
+//            int i = entry.key; 
             var ex = entry.value;
 
             return Card(

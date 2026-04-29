@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'screens/workout_screen.dart';
+import 'package:beast_mode_fitness/screens/notifications_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -845,7 +845,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         description: 'Workout logging will plug in here next.',
         icon: Icons.add_circle_outline,
       ),
-      const WorkoutScreen(
+      const NotificationsScreen(
         title: 'Notifications',
         description:
             'Alerts, reminders, and feedback updates will appear here.',
