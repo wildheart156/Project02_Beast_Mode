@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'screens/workout_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -839,12 +840,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         displayName: displayName,
         goals: (widget.profile['fitnessGoals'] as String?)?.trim(),
       ),
-      const _PlaceholderTab(
+      const WorkoutScreen(
         title: 'Workout',
         description: 'Workout logging will plug in here next.',
         icon: Icons.add_circle_outline,
       ),
-      const _PlaceholderTab(
+      const WorkoutScreen(
         title: 'Notifications',
         description:
             'Alerts, reminders, and feedback updates will appear here.',
@@ -997,15 +998,12 @@ class _DashboardHome extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _MetricTile(label: 'Reps Completed', value: '120'),
+                      child: _MetricTile(
+                        label: 'Reps Completed',
+                        value: '120',
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                _PrimaryButton(
-                  label: 'Start Workout',
-                  isLoading: false,
-                  onPressed: () {},
                 ),
               ],
             ),
@@ -1198,8 +1196,8 @@ class _PostAction extends StatelessWidget {
   }
 }
 
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({
+class WorkoutScreen extends StatelessWidget {
+  const WorkoutScreen({
     required this.title,
     required this.description,
     required this.icon,
