@@ -18,6 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final TextEditingController _goalsController;
   late final TextEditingController _statsController;
   bool _isSaving = false;
+  bool _isEditing = false;
 
   @override
   void initState() {
@@ -75,6 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return;
       }
 
+      setState(() => _isEditing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profile updated successfully.')),
       );
@@ -100,6 +102,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final displayName = _usernameController.text.trim().isNotEmpty
         ? _usernameController.text.trim()
         : widget.user.email ?? 'Athlete';
+    final goals = _goalsController.text.trim();
+    final stats = _statsController.text.trim();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
@@ -153,96 +157,166 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderRadius: BorderRadius.circular(22),
               border: Border.all(color: const Color(0xFFD7DCE3)),
             ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Profile',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5B6472),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Keep your profile updated so your dashboard and future recommendations stay relevant.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF7B8492),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  TextFormField(
-                    controller: _usernameController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Enter a username.';
-                      }
-                      return null;
-                    },
-                    decoration: const InputDecoration(hintText: 'Username'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    initialValue: widget.user.email ?? '',
-                    enabled: false,
-                    decoration: const InputDecoration(hintText: 'Email'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _goalsController,
-                    minLines: 2,
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Add at least one fitness goal.';
-                      }
-                      return null;
-                    },
-                    decoration: const InputDecoration(
-                      hintText: 'Fitness goals',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _statsController,
-                    minLines: 2,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Personal stats (optional)',
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  FilledButton(
-                    onPressed: _isSaving ? null : _saveProfile,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF929AA6),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Profile',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF5B6472),
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Keep your profile updated so your dashboard and future recommendations stay relevant.',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFF7B8492)),
+                          ),
+                        ],
                       ),
                     ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                    const SizedBox(width: 12),
+                    TextButton.icon(
+                      onPressed: _isSaving
+                          ? null
+                          : () {
+                              setState(() {
+                                _isEditing = !_isEditing;
+                              });
+                            },
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF67707E),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                      ),
+                      icon: Icon(
+                        _isEditing ? Icons.close_rounded : Icons.edit_rounded,
+                        size: 16,
+                      ),
+                      label: Text(_isEditing ? 'Cancel' : 'Edit'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                _isEditing
+                    ? Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextFormField(
+                              controller: _usernameController,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Enter a username.';
+                                }
+                                return null;
+                              },
+                              decoration: const InputDecoration(
+                                hintText: 'Username',
                               ),
                             ),
-                          )
-                        : const Text('Save Changes'),
-                  ),
-                ],
-              ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              initialValue: widget.user.email ?? '',
+                              enabled: false,
+                              decoration: const InputDecoration(
+                                hintText: 'Email',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _goalsController,
+                              minLines: 2,
+                              maxLines: 3,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Add at least one fitness goal.';
+                                }
+                                return null;
+                              },
+                              decoration: const InputDecoration(
+                                hintText: 'Fitness goals',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _statsController,
+                              minLines: 2,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                hintText: 'Personal stats (optional)',
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            FilledButton(
+                              onPressed: _isSaving ? null : _saveProfile,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF929AA6),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(52),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              child: _isSaving
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : const Text('Save Changes'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _ProfileField(label: 'Username', value: displayName),
+                          const SizedBox(height: 18),
+                          _ProfileField(
+                            label: 'Email',
+                            value: widget.user.email ?? '',
+                          ),
+                          const SizedBox(height: 18),
+                          _ProfileField(
+                            label: 'Fitness goals',
+                            value: goals.isNotEmpty
+                                ? goals
+                                : 'No fitness goals added yet.',
+                          ),
+                          const SizedBox(height: 18),
+                          _ProfileField(
+                            label: 'Personal stats',
+                            value: stats.isNotEmpty
+                                ? stats
+                                : 'No personal stats added yet.',
+                          ),
+                        ],
+                      ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -264,13 +338,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'You can update your training goals here as your routine changes.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7B8492),
-                  ),
-                ),
-                const SizedBox(height: 18),
                 OutlinedButton(
                   onPressed: () => FirebaseAuth.instance.signOut(),
                   style: OutlinedButton.styleFrom(
@@ -289,6 +356,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+}
+
+class _ProfileField extends StatelessWidget {
+  const _ProfileField({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF7B8492),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: const Color(0xFF5B6472),
+            height: 1.45,
+          ),
+        ),
+      ],
     );
   }
 }
