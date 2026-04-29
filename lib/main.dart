@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:beast_mode_fitness/screens/notifications_screen.dart';
 import 'package:beast_mode_fitness/screens/profile_screen.dart';
+import 'package:beast_mode_fitness/screens/workout_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -841,11 +842,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         displayName: displayName,
         goals: (widget.profile['fitnessGoals'] as String?)?.trim(),
       ),
-      const WorkoutScreen(
-        title: 'Workout',
-        description: 'Workout logging will plug in here next.',
-        icon: Icons.add_circle_outline,
-      ),
+      const WorkoutScreen(),
       const NotificationsScreen(
         title: 'Notifications',
         description:
@@ -1186,55 +1183,6 @@ class _PostAction extends StatelessWidget {
           ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF818A98)),
         ),
       ],
-    );
-  }
-}
-
-class WorkoutScreen extends StatelessWidget {
-  const WorkoutScreen({
-    super.key,
-    required this.title,
-    required this.description,
-    required this.icon,
-  });
-
-  final String title;
-  final String description;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: _SectionCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 42, color: const Color(0xFF8E96A3)),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF5B6472),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF7B8492),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
