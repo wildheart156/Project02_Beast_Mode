@@ -1111,13 +1111,6 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-class _MockFeedPost {
-  const _MockFeedPost({required this.username, required this.caption});
-
-  final String username;
-  final String caption;
-}
-
 class _FeedPostCard extends StatelessWidget {
   const _FeedPostCard({required this.post});
 
