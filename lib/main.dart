@@ -974,7 +974,7 @@ class _DashboardHome extends StatelessWidget {
         : 'Stay consistent this week and keep your momentum moving.';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 126),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -39,6 +39,7 @@ class NotificationsScreen extends StatelessWidget {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 126),
             itemCount: docs.length,
             itemBuilder: (context, i) {
               final data = docs[i].data();

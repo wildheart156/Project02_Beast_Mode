@@ -453,6 +453,7 @@ class _WorkoutBuilderView extends StatelessWidget {
       key: formKey,
       child: ListView(
         key: const ValueKey('builder-list'),
+        padding: const EdgeInsets.only(bottom: 126),
         children: [
           _WorkoutFeedbackCard(
             intensity: intensity,
@@ -750,6 +751,7 @@ class _WorkoutSummaryView extends StatelessWidget {
 
     return ListView(
       key: const ValueKey('summary-list'),
+      padding: const EdgeInsets.only(bottom: 126),
       children: [
         Container(
           padding: const EdgeInsets.all(18),
@@ -945,6 +947,7 @@ class _WorkoutHistoryView extends StatelessWidget {
 
         return ListView.builder(
           key: const ValueKey('history-list'),
+          padding: const EdgeInsets.only(bottom: 126),
           itemCount: workouts.length,
           itemBuilder: (context, index) {
             final workout = workouts[index];
