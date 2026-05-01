@@ -34,6 +34,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DashboardHome(
         userId: widget.user.uid,
         displayName: displayName,
+        profileImageUrl:
+            (widget.profile['profileImageURL'] as String?)?.trim() ?? '',
         goals: (widget.profile['fitnessGoals'] as String?)?.trim(),
         onOpenWorkoutTab: () => setState(() => _selectedIndex = 1),
       ),

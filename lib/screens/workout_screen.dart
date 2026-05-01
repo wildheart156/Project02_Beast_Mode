@@ -1,6 +1,7 @@
 import 'package:beast_mode_fitness/models/exercise_search_result.dart';
 import 'package:beast_mode_fitness/models/workout_exercise_draft.dart';
 import 'package:beast_mode_fitness/models/workout_session.dart';
+import 'package:beast_mode_fitness/screens/social/widgets/create_post_sheet.dart';
 import 'package:beast_mode_fitness/screens/workout/widgets/exercise_search_sheet.dart';
 import 'package:beast_mode_fitness/screens/workout/widgets/workout_builder_view.dart';
 import 'package:beast_mode_fitness/screens/workout/widgets/workout_header.dart';
@@ -9,8 +10,10 @@ import 'package:beast_mode_fitness/screens/workout/widgets/workout_message_card.
 import 'package:beast_mode_fitness/screens/workout/widgets/workout_summary_view.dart';
 import 'package:beast_mode_fitness/screens/workout/workout_calculator.dart';
 import 'package:beast_mode_fitness/screens/workout/workout_view.dart';
+import 'package:beast_mode_fitness/services/social_feed_repository.dart';
 import 'package:beast_mode_fitness/services/wger_exercise_service.dart';
 import 'package:beast_mode_fitness/services/workout_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -25,6 +28,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _exerciseService = WgerExerciseService();
   final _workoutRepository = WorkoutRepository();
+  final _socialFeedRepository = SocialFeedRepository();
   final List<WorkoutExerciseDraft> _drafts = [];
 
   WorkoutView _view = WorkoutView.builder;
@@ -254,6 +258,57 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
+  Future<void> _shareWorkoutToFeed(WorkoutSession workout) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign in again to share workouts.')),
+      );
+      return;
+    }
+
+    final profile = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user.uid)
+        .get();
+    final profileData = profile.data() ?? <String, dynamic>{};
+    final username =
+        ((profileData['username'] as String?)?.trim().isNotEmpty == true)
+        ? (profileData['username'] as String).trim()
+        : (user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : user.email ?? 'Athlete');
+    final profileImageUrl =
+        (profileData['profileImageURL'] as String?)?.trim() ?? '';
+
+    if (!mounted) {
+      return;
+    }
+
+    final posted = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (context) {
+        return CreatePostSheet(
+          repository: _socialFeedRepository,
+          authorId: user.uid,
+          username: username,
+          profileImageUrl: profileImageUrl,
+          workout: WorkoutShareDetails.fromWorkout(workout),
+          initialCaption:
+              'Logged ${workout.exerciseCount} exercises and burned about ${workout.estimatedCaloriesBurned} calories.',
+        );
+      },
+    );
+
+    if (posted == true && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Workout shared.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeDrafts = _drafts
@@ -322,12 +377,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           onViewHistory: () {
                             _setActiveView(WorkoutView.history);
                           },
+                          onShareWorkout: _shareWorkoutToFeed,
                         ),
                         WorkoutView.history => WorkoutHistoryView(
                           key: const ValueKey('history'),
                           userId: user.uid,
                           repository: _workoutRepository,
                           onEditWorkout: _loadWorkoutForEditing,
+                          onShareWorkout: _shareWorkoutToFeed,
                         ),
                       },
                     ),
