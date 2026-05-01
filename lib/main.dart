@@ -8,7 +8,7 @@ import 'package:beast_mode_fitness/screens/profile_screen.dart';
 import 'package:beast_mode_fitness/screens/workout_screen.dart';
 import 'package:beast_mode_fitness/models/workout_session.dart';
 import 'package:beast_mode_fitness/services/workout_repository.dart';
-import 'package:beast_mode_fitness/models/post.dart';
+import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -32,30 +32,71 @@ class BeastModeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFF3F4F6);
-    const primary = Color(0xFF8E96A3);
-    const text = Color(0xFF565F6D);
-
     return MaterialApp(
       title: 'Beast Mode',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: background,
+        scaffoldBackgroundColor: BeastModeColors.ash,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: primary,
-          primary: primary,
-          surface: Colors.white,
+          seedColor: BeastModeColors.flame,
+          primary: BeastModeColors.flame,
+          secondary: BeastModeColors.volt,
+          surface: BeastModeColors.surface,
+          onPrimary: Colors.white,
+          onSecondary: BeastModeColors.graphite,
+        ),
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          foregroundColor: BeastModeColors.graphite,
+          elevation: 0,
         ),
         textTheme: ThemeData.light().textTheme.apply(
-          bodyColor: text,
-          displayColor: text,
+          bodyColor: BeastModeColors.graphite,
+          displayColor: BeastModeColors.graphite,
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: BeastModeColors.flame,
+          linearTrackColor: BeastModeColors.flameSoft,
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: BeastModeColors.flame,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: BeastModeColors.steelLight,
+            disabledForegroundColor: BeastModeColors.steel,
+            minimumSize: const Size.fromHeight(52),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: BeastModeColors.graphite,
+            side: const BorderSide(color: BeastModeColors.steelLight),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: BeastModeColors.flame),
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: BeastModeColors.graphite,
+          contentTextStyle: TextStyle(color: Colors.white),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: BeastModeColors.surface,
           hintStyle: const TextStyle(
-            color: Color(0xFFAAB1BC),
+            color: BeastModeColors.steel,
             fontWeight: FontWeight.w400,
           ),
           contentPadding: const EdgeInsets.symmetric(
@@ -64,15 +105,18 @@ class BeastModeApp extends StatelessWidget {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFC7CCD4)),
+            borderSide: const BorderSide(color: BeastModeColors.steelLight),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFC7CCD4)),
+            borderSide: const BorderSide(color: BeastModeColors.steelLight),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: primary, width: 1.5),
+            borderSide: const BorderSide(
+              color: BeastModeColors.flame,
+              width: 1.7,
+            ),
           ),
         ),
       ),
@@ -130,6 +174,86 @@ class AuthGate extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _BeastModeBrandHeader extends StatelessWidget {
+  const _BeastModeBrandHeader({this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final markSize = compact ? 34.0 : 52.0;
+    final beastStyle =
+        (compact
+                ? Theme.of(context).textTheme.titleMedium
+                : Theme.of(context).textTheme.headlineMedium)
+            ?.copyWith(
+              color: BeastModeColors.graphite,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              height: 0.95,
+            );
+    final modeStyle =
+        (compact
+                ? Theme.of(context).textTheme.titleMedium
+                : Theme.of(context).textTheme.headlineMedium)
+            ?.copyWith(
+              color: BeastModeColors.flame,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              height: 0.95,
+            );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: markSize,
+          height: markSize,
+          decoration: BoxDecoration(
+            color: BeastModeColors.graphite,
+            borderRadius: BorderRadius.circular(compact ? 11 : 16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x24FF5A1F),
+                blurRadius: 14,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.fitness_center_rounded,
+                color: BeastModeColors.flame,
+                size: compact ? 18 : 28,
+              ),
+              Positioned(
+                right: compact ? 5 : 8,
+                top: compact ? 4 : 7,
+                child: Icon(
+                  Icons.bolt_rounded,
+                  color: BeastModeColors.volt,
+                  size: compact ? 13 : 18,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: compact ? 8 : 12),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(text: 'BEAST', style: beastStyle),
+              TextSpan(text: ' MODE', style: modeStyle),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -273,16 +397,22 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Container(
                 padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FB),
-                  border: Border.all(color: const Color(0xFFD0D5DD)),
+                  color: BeastModeColors.surfaceWarm,
+                  border: Border.all(color: BeastModeColors.flameSoft),
                   borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x12FF5A1F),
+                      blurRadius: 24,
+                      offset: Offset(0, 12),
+                    ),
+                  ],
                 ),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
                   child: _isLogin
                       ? _AuthCard(
                           key: const ValueKey('login'),
-                          title: 'BEAST MODE',
                           subtitle: 'Sign in and keep your streak moving.',
                           formKey: _loginFormKey,
                           children: [
@@ -311,7 +441,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 TextButton(
                                   onPressed: _isLoading ? null : _resetPassword,
                                   style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF67707E),
+                                    foregroundColor: BeastModeColors.graphite,
                                     padding: EdgeInsets.zero,
                                   ),
                                   child: const Text('Forgot Password?'),
@@ -320,7 +450,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 TextButton(
                                   onPressed: _isLoading ? null : _toggleMode,
                                   style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF67707E),
+                                    foregroundColor: BeastModeColors.flame,
                                     padding: EdgeInsets.zero,
                                   ),
                                   child: const Text('Sign Up'),
@@ -331,7 +461,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         )
                       : _AuthCard(
                           key: const ValueKey('register'),
-                          title: 'BEAST MODE',
                           subtitle: 'Create your account and start strong.',
                           formKey: _registerFormKey,
                           children: [
@@ -371,7 +500,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: TextButton(
                                 onPressed: _isLoading ? null : _toggleMode,
                                 style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF67707E),
+                                  foregroundColor: BeastModeColors.flame,
                                   padding: EdgeInsets.zero,
                                 ),
                                 child: const Text('Back to Login'),
@@ -498,9 +627,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile Setup'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFF5B6472),
         actions: [
           TextButton(
             onPressed: _isSaving ? null : () => FirebaseAuth.instance.signOut(),
@@ -517,8 +643,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               child: Container(
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FB),
-                  border: Border.all(color: const Color(0xFFD0D5DD)),
+                  color: BeastModeColors.surfaceWarm,
+                  border: Border.all(color: BeastModeColors.flameSoft),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Form(
@@ -531,23 +657,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF5B6472),
+                              color: BeastModeColors.graphite,
                             ),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         'Set the basics now so your dashboard and workout data can feel personal from the start.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF7B8492),
+                          color: BeastModeColors.steel,
                         ),
                       ),
                       const SizedBox(height: 22),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: BeastModeColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFD7DCE3)),
+                          border: Border.all(color: BeastModeColors.steelLight),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,14 +683,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF5B6472),
+                                    color: BeastModeColors.graphite,
                                   ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               widget.user.email ?? '',
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: const Color(0xFF7B8492)),
+                                  ?.copyWith(color: BeastModeColors.steel),
                             ),
                           ],
                         ),
@@ -603,14 +729,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: BeastModeColors.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFD7DCE3)),
+                          border: Border.all(color: BeastModeColors.flameSoft),
                         ),
                         child: Text(
                           'Your goals help Beast Mode tailor your dashboard, workout feedback, and progress tracking from day one.',
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: const Color(0xFF7B8492)),
+                              ?.copyWith(color: BeastModeColors.steel),
                         ),
                       ),
                     ],
@@ -628,25 +754,17 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 class _AuthCard extends StatelessWidget {
   const _AuthCard({
     super.key,
-    required this.title,
     required this.subtitle,
     required this.formKey,
     required this.children,
   });
 
-  final String title;
   final String subtitle;
   final GlobalKey<FormState> formKey;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
-      fontWeight: FontWeight.w800,
-      letterSpacing: 0.6,
-      color: const Color(0xFF727B88),
-    );
-
     return Form(
       key: formKey,
       child: Column(
@@ -654,14 +772,14 @@ class _AuthCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 8),
-          Text(title, textAlign: TextAlign.center, style: titleStyle),
-          const SizedBox(height: 12),
+          const Center(child: _BeastModeBrandHeader()),
+          const SizedBox(height: 16),
           Text(
             subtitle,
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7D8794)),
+            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
           ),
           const SizedBox(height: 42),
           ...children,
@@ -714,11 +832,11 @@ class _PrimaryButton extends StatelessWidget {
     return FilledButton(
       onPressed: isLoading ? null : onPressed,
       style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFF929AA6),
+        backgroundColor: BeastModeColors.flame,
         foregroundColor: Colors.white,
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
       ),
       child: isLoading
           ? const SizedBox(
@@ -780,9 +898,9 @@ class _StatusScaffold extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: BeastModeColors.surface,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFD7DCE3)),
+                border: Border.all(color: BeastModeColors.steelLight),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -792,14 +910,14 @@ class _StatusScaffold extends StatelessWidget {
                     title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF5B6472),
+                      color: BeastModeColors.graphite,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     message,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF7B8492),
+                      color: BeastModeColors.steel,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -859,10 +977,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('BEAST MODE'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFF5B6472),
+        title: const _BeastModeBrandHeader(compact: true),
         actions: [
           IconButton(
             onPressed: () {},
@@ -871,63 +986,85 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: KeyedSubtree(
-            key: ValueKey(_selectedIndex),
-            child: pages[_selectedIndex],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFF959DA8),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 16,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  isSelected: _selectedIndex == 0,
-                  onTap: () => setState(() => _selectedIndex = 0),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                layoutBuilder: (currentChild, previousChildren) {
+                  return Stack(
+                    alignment: Alignment.topCenter,
+                    fit: StackFit.expand,
+                    children: [...previousChildren, ?currentChild],
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey(_selectedIndex),
+                  child: pages[_selectedIndex],
                 ),
-                _NavItem(
-                  icon: Icons.add_circle,
-                  label: 'Workout',
-                  isSelected: _selectedIndex == 1,
-                  onTap: () => setState(() => _selectedIndex = 1),
-                ),
-                _NavItem(
-                  icon: Icons.notifications_rounded,
-                  label: 'Alerts',
-                  isSelected: _selectedIndex == 2,
-                  onTap: () => setState(() => _selectedIndex = 2),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isSelected: _selectedIndex == 3,
-                  onTap: () => setState(() => _selectedIndex = 3),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              minimum: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: BeastModeColors.graphite,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _NavItem(
+                        icon: Icons.home_rounded,
+                        label: 'Home',
+                        isSelected: _selectedIndex == 0,
+                        onTap: () => setState(() => _selectedIndex = 0),
+                      ),
+                      _NavItem(
+                        icon: Icons.add_circle,
+                        label: 'Workout',
+                        isSelected: _selectedIndex == 1,
+                        onTap: () => setState(() => _selectedIndex = 1),
+                      ),
+                      _NavItem(
+                        icon: Icons.notifications_rounded,
+                        label: 'Alerts',
+                        isSelected: _selectedIndex == 2,
+                        onTap: () => setState(() => _selectedIndex = 2),
+                      ),
+                      _NavItem(
+                        icon: Icons.person_rounded,
+                        label: 'Profile',
+                        isSelected: _selectedIndex == 3,
+                        onTap: () => setState(() => _selectedIndex = 3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -953,7 +1090,7 @@ class _DashboardHome extends StatelessWidget {
         : 'Stay consistent this week and keep your momentum moving.';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 126),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -961,7 +1098,7 @@ class _DashboardHome extends StatelessWidget {
             'Welcome back, $displayName',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.graphite,
             ),
           ),
           const SizedBox(height: 8),
@@ -969,7 +1106,7 @@ class _DashboardHome extends StatelessWidget {
             subtitle,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
           ),
           const SizedBox(height: 18),
           _TodaysWorkoutCard(
@@ -985,7 +1122,7 @@ class _DashboardHome extends StatelessWidget {
                   'Social Feed',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF5B6472),
+                    color: BeastModeColors.graphite,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1038,9 +1175,9 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BeastModeColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD7DCE3)),
+        border: Border.all(color: BeastModeColors.steelLight),
       ),
       child: child,
     );
@@ -1058,8 +1195,9 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5F8),
+        color: BeastModeColors.voltSoft,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0x55C8FF2D)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1068,7 +1206,7 @@ class _MetricTile extends StatelessWidget {
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.graphite,
             ),
           ),
           const SizedBox(height: 4),
@@ -1076,7 +1214,7 @@ class _MetricTile extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF7B8492)),
+            ).textTheme.bodySmall?.copyWith(color: BeastModeColors.steel),
           ),
         ],
       ),
@@ -1127,11 +1265,11 @@ class _TodaysWorkoutCard extends StatelessWidget {
                 "Today's Workout",
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.graphite,
                 ),
               ),
               const SizedBox(height: 10),
-              const Divider(height: 1, color: Color(0xFFD8DCE4)),
+              const Divider(height: 1, color: BeastModeColors.divider),
               const SizedBox(height: 14),
               if (snapshot.connectionState == ConnectionState.waiting)
                 const Center(
@@ -1144,21 +1282,21 @@ class _TodaysWorkoutCard extends StatelessWidget {
                 Text(
                   'We could not load today\'s workout summary right now.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7B8492),
+                    color: BeastModeColors.steel,
                   ),
                 )
               else if (workoutCount == 0) ...[
                 Text(
                   'No workout logged yet today. Start a session to see your calories and reps here.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7B8492),
+                    color: BeastModeColors.steel,
                   ),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: onOpenWorkoutTab,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF929AA6),
+                    backgroundColor: BeastModeColors.flame,
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(
@@ -1191,14 +1329,14 @@ class _TodaysWorkoutCard extends StatelessWidget {
                       ? '1 workout logged today'
                       : '$workoutCount workouts logged today',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7B8492),
+                    color: BeastModeColors.steel,
                   ),
                 ),
                 const SizedBox(height: 14),
                 FilledButton(
                   onPressed: onOpenWorkoutTab,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF929AA6),
+                    backgroundColor: BeastModeColors.flame,
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(
@@ -1227,9 +1365,9 @@ class _FeedPostCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: BeastModeColors.surfaceWarm,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE0E4EA)),
+        border: Border.all(color: BeastModeColors.flameSoft),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1238,15 +1376,19 @@ class _FeedPostCard extends StatelessWidget {
             children: [
               const CircleAvatar(
                 radius: 15,
-                backgroundColor: Color(0xFFD0D5DD),
-                child: Icon(Icons.person, size: 16, color: Colors.white),
+                backgroundColor: BeastModeColors.graphite,
+                child: Icon(
+                  Icons.person,
+                  size: 16,
+                  color: BeastModeColors.volt,
+                ),
               ),
               const SizedBox(width: 10),
               Text(
                 post.username,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.graphite,
                 ),
               ),
             ],
@@ -1257,14 +1399,14 @@ class _FeedPostCard extends StatelessWidget {
             width: double.infinity,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFD9DDE3),
+              color: BeastModeColors.graphiteSoft,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               'Workout Pic',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: BeastModeColors.volt,
               ),
             ),
           ),
@@ -1272,12 +1414,12 @@ class _FeedPostCard extends StatelessWidget {
           Text(
             post.caption,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.graphite,
               fontStyle: FontStyle.italic,
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFD8DCE4)),
+          const Divider(height: 1, color: BeastModeColors.divider),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1304,13 +1446,13 @@ class _PostAction extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF818A98)),
+        Icon(icon, size: 18, color: BeastModeColors.flame),
         const SizedBox(width: 6),
         Text(
           label,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF818A98)),
+          ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
         ),
       ],
     );
@@ -1339,18 +1481,25 @@ class _NavItem extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0x26FFFFFF) : Colors.transparent,
+          color: isSelected ? BeastModeColors.flame : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? BeastModeColors.flame : Colors.transparent,
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: isSelected ? 30 : 26),
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : BeastModeColors.steelLight,
+              size: isSelected ? 30 : 26,
+            ),
             const SizedBox(height: 2),
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.white,
+                color: isSelected ? Colors.white : BeastModeColors.steelLight,
                 fontWeight: FontWeight.w700,
               ),
             ),
