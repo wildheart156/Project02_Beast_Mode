@@ -1,6 +1,7 @@
 import 'package:beast_mode_fitness/models/post_comment.dart';
 import 'package:beast_mode_fitness/models/social_post.dart';
 import 'package:beast_mode_fitness/screens/dashboard/widgets/feed_post_card.dart';
+import 'package:beast_mode_fitness/screens/social/widgets/comments_sheet.dart';
 import 'package:beast_mode_fitness/screens/social/widgets/create_post_sheet.dart';
 import 'package:beast_mode_fitness/screens/social/widgets/social_feed_section.dart';
 import 'package:beast_mode_fitness/services/social_feed_repository.dart';
@@ -133,6 +134,89 @@ void main() {
     expect(find.text('Add a caption before posting.'), findsOneWidget);
     expect(repository.createPostCount, 0);
   });
+
+  testWidgets('CreatePostSheet edits an existing post', (tester) async {
+    final repository = _FakeSocialFeedRepository();
+    final post = _post(id: 'post-9', caption: 'Old caption');
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: CreatePostSheet(
+          repository: repository,
+          authorId: 'author-1',
+          username: 'Ryan',
+          profileImageUrl: '',
+          existingPost: post,
+        ),
+      ),
+    );
+
+    expect(find.text('Edit Post'), findsOneWidget);
+    expect(find.text('Save Changes'), findsOneWidget);
+    expect(find.text('Old caption'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'New caption');
+    await tester.tap(find.text('Save Changes'));
+    await tester.pump();
+
+    expect(repository.updatePostCount, 1);
+    expect(repository.lastUpdatedPostId, 'post-9');
+    expect(repository.lastUpdatedCaption, 'New caption');
+  });
+
+  testWidgets('CommentsSheet allows author to edit and delete comments', (
+    tester,
+  ) async {
+    final repository = _FakeSocialFeedRepository(
+      commentsStream: Stream.value([
+        PostComment(
+          id: 'comment-1',
+          authorId: 'user-1',
+          username: 'Ryan',
+          body: 'Original comment',
+          createdAt: DateTime(2026),
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      _TestApp(
+        child: CommentsSheet(
+          post: _post(id: 'post-1'),
+          repository: repository,
+          userId: 'user-1',
+          username: 'Ryan',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit Comment'), findsOneWidget);
+    expect(find.text('Delete Comment'), findsOneWidget);
+
+    await tester.tap(find.text('Edit Comment'));
+    await tester.pumpAndSettle();
+    expect(find.text('Editing your comment'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Updated comment');
+    await tester.tap(find.byTooltip('Save comment'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCommentCount, 1);
+    expect(repository.lastUpdatedCommentId, 'comment-1');
+    expect(repository.lastUpdatedCommentBody, 'Updated comment');
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete Comment'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteCommentCount, 1);
+    expect(repository.lastDeletedCommentId, 'comment-1');
+  });
 }
 
 class _TestApp extends StatelessWidget {
@@ -149,12 +233,23 @@ class _TestApp extends StatelessWidget {
 class _FakeSocialFeedRepository implements SocialFeedRepository {
   _FakeSocialFeedRepository({
     Stream<List<SocialPost>>? postsStream,
+    Stream<List<PostComment>>? commentsStream,
     this.isLiked = false,
-  }) : postsStream = postsStream ?? Stream.value(const <SocialPost>[]);
+  }) : postsStream = postsStream ?? Stream.value(const <SocialPost>[]),
+       commentsStream = commentsStream ?? Stream.value(const <PostComment>[]);
 
   final Stream<List<SocialPost>> postsStream;
+  final Stream<List<PostComment>> commentsStream;
   final bool isLiked;
   int createPostCount = 0;
+  int updatePostCount = 0;
+  int updateCommentCount = 0;
+  int deleteCommentCount = 0;
+  String? lastUpdatedPostId;
+  String? lastUpdatedCaption;
+  String? lastUpdatedCommentId;
+  String? lastUpdatedCommentBody;
+  String? lastDeletedCommentId;
 
   @override
   Future<void> addComment({
@@ -166,7 +261,7 @@ class _FakeSocialFeedRepository implements SocialFeedRepository {
 
   @override
   Stream<List<PostComment>> comments(String postId) {
-    return Stream.value(const <PostComment>[]);
+    return commentsStream;
   }
 
   @override
@@ -185,6 +280,39 @@ class _FakeSocialFeedRepository implements SocialFeedRepository {
     required SocialPost post,
     required String userId,
   }) async {}
+
+  @override
+  Future<void> deleteComment({
+    required String postId,
+    required PostComment comment,
+    required String userId,
+  }) async {
+    deleteCommentCount++;
+    lastDeletedCommentId = comment.id;
+  }
+
+  @override
+  Future<void> updatePost({
+    required SocialPost post,
+    required String userId,
+    required String caption,
+  }) async {
+    updatePostCount++;
+    lastUpdatedPostId = post.id;
+    lastUpdatedCaption = caption;
+  }
+
+  @override
+  Future<void> updateComment({
+    required String postId,
+    required PostComment comment,
+    required String userId,
+    required String body,
+  }) async {
+    updateCommentCount++;
+    lastUpdatedCommentId = comment.id;
+    lastUpdatedCommentBody = body;
+  }
 
   @override
   Stream<bool> isLikedByUser({required String postId, required String userId}) {

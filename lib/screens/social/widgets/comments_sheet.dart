@@ -24,6 +24,7 @@ class CommentsSheet extends StatefulWidget {
 
 class _CommentsSheetState extends State<CommentsSheet> {
   final _controller = TextEditingController();
+  PostComment? _editingComment;
   bool _isSaving = false;
 
   @override
@@ -32,7 +33,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     super.dispose();
   }
 
-  Future<void> _addComment() async {
+  Future<void> _submitComment() async {
     final body = _controller.text.trim();
     if (body.isEmpty) {
       return;
@@ -42,25 +43,102 @@ class _CommentsSheetState extends State<CommentsSheet> {
     setState(() => _isSaving = true);
 
     try {
-      await widget.repository.addComment(
-        postId: widget.post.id,
-        authorId: widget.userId,
-        username: widget.username,
-        body: body,
-      );
+      if (_editingComment != null) {
+        await widget.repository.updateComment(
+          postId: widget.post.id,
+          comment: _editingComment!,
+          userId: widget.userId,
+          body: body,
+        );
+      } else {
+        await widget.repository.addComment(
+          postId: widget.post.id,
+          authorId: widget.userId,
+          username: widget.username,
+          body: body,
+        );
+      }
       _controller.clear();
+      if (mounted) {
+        setState(() => _editingComment = null);
+      }
     } catch (error) {
       if (!mounted) {
         return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('We could not add that comment. $error')),
+        SnackBar(
+          content: Text(
+            _editingComment != null
+                ? 'We could not update that comment. $error'
+                : 'We could not add that comment. $error',
+          ),
+        ),
       );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
       }
+    }
+  }
+
+  Future<void> _editComment(PostComment comment) async {
+    setState(() {
+      _editingComment = comment;
+      _controller.text = comment.body;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),
+      );
+    });
+  }
+
+  Future<void> _deleteComment(PostComment comment) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Comment'),
+          content: const Text(
+            'Are you sure you want to remove this comment from the conversation?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) {
+      return;
+    }
+
+    try {
+      await widget.repository.deleteComment(
+        postId: widget.post.id,
+        comment: comment,
+        userId: widget.userId,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Comment deleted.')));
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('We could not delete that comment. $error')),
+      );
     }
   }
 
@@ -127,13 +205,45 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     return ListView.builder(
                       itemCount: comments.length,
                       itemBuilder: (context, index) {
-                        return _CommentTile(comment: comments[index]);
+                        return _CommentTile(
+                          comment: comments[index],
+                          userId: widget.userId,
+                          onEdit: () => _editComment(comments[index]),
+                          onDelete: () => _deleteComment(comments[index]),
+                        );
                       },
                     );
                   },
                 ),
               ),
               const SizedBox(height: 12),
+              if (_editingComment != null) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Editing your comment',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: BeastModeColors.steel,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () {
+                              setState(() {
+                                _editingComment = null;
+                                _controller.clear();
+                              });
+                            },
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -150,7 +260,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   ),
                   const SizedBox(width: 10),
                   IconButton.filled(
-                    onPressed: _isSaving ? null : _addComment,
+                    onPressed: _isSaving ? null : _submitComment,
                     icon: _isSaving
                         ? const SizedBox(
                             width: 18,
@@ -160,8 +270,14 @@ class _CommentsSheetState extends State<CommentsSheet> {
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(Icons.send_rounded),
-                    tooltip: 'Send comment',
+                        : Icon(
+                            _editingComment != null
+                                ? Icons.save_rounded
+                                : Icons.send_rounded,
+                          ),
+                    tooltip: _editingComment != null
+                        ? 'Save comment'
+                        : 'Send comment',
                   ),
                 ],
               ),
@@ -174,9 +290,17 @@ class _CommentsSheetState extends State<CommentsSheet> {
 }
 
 class _CommentTile extends StatelessWidget {
-  const _CommentTile({required this.comment});
+  const _CommentTile({
+    required this.comment,
+    required this.userId,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final PostComment comment;
+  final String userId;
+  final Future<void> Function() onEdit;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -191,12 +315,57 @@ class _CommentTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            comment.username,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: BeastModeColors.graphite,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  comment.username,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: BeastModeColors.graphite,
+                  ),
+                ),
+              ),
+              if (comment.authorId == userId)
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 168,
+                    maxWidth: 200,
+                  ),
+                  color: BeastModeColors.surface,
+                  surfaceTintColor: Colors.transparent,
+                  onSelected: (value) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      if (value == 'edit') {
+                        await onEdit();
+                      }
+
+                      if (value == 'delete') {
+                        await onDelete();
+                      }
+                    });
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Text('Edit Comment'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Delete Comment'),
+                    ),
+                  ],
+                  child: const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Center(
+                      child: Icon(Icons.more_vert_rounded, size: 18),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

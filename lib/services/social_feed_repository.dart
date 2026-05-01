@@ -103,6 +103,21 @@ class SocialFeedRepository {
     });
   }
 
+  Future<void> updatePost({
+    required SocialPost post,
+    required String userId,
+    required String caption,
+  }) async {
+    if (post.authorId != userId) {
+      throw StateError('Only the post author can edit this post.');
+    }
+
+    await _posts.doc(post.id).update({
+      'caption': caption.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> deletePost({
     required SocialPost post,
     required String userId,
@@ -169,6 +184,49 @@ class SocialFeedRepository {
     });
     batch.update(postRef, {
       'commentCount': FieldValue.increment(1),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+  }
+
+  Future<void> updateComment({
+    required String postId,
+    required PostComment comment,
+    required String userId,
+    required String body,
+  }) async {
+    if (comment.authorId != userId) {
+      throw StateError('Only the comment author can edit this comment.');
+    }
+
+    final trimmedBody = body.trim();
+    if (trimmedBody.isEmpty) {
+      throw ArgumentError('Comment body cannot be empty.');
+    }
+
+    await _posts.doc(postId).collection('Comments').doc(comment.id).update({
+      'body': trimmedBody,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteComment({
+    required String postId,
+    required PostComment comment,
+    required String userId,
+  }) async {
+    if (comment.authorId != userId) {
+      throw StateError('Only the comment author can delete this comment.');
+    }
+
+    final postRef = _posts.doc(postId);
+    final commentRef = postRef.collection('Comments').doc(comment.id);
+    final batch = _firestore.batch();
+
+    batch.delete(commentRef);
+    batch.update(postRef, {
+      'commentCount': FieldValue.increment(-1),
       'updatedAt': FieldValue.serverTimestamp(),
     });
 

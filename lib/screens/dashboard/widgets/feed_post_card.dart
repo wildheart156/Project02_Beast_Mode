@@ -1,5 +1,6 @@
 import 'package:beast_mode_fitness/models/social_post.dart';
 import 'package:beast_mode_fitness/screens/social/widgets/comments_sheet.dart';
+import 'package:beast_mode_fitness/screens/social/widgets/create_post_sheet.dart';
 import 'package:beast_mode_fitness/services/social_feed_repository.dart';
 import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,29 @@ class FeedPostCard extends StatelessWidget {
   final SocialFeedRepository repository;
   final String userId;
   final String username;
+
+  Future<void> _editPost(BuildContext context) async {
+    final updated = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: BeastModeColors.ash,
+      builder: (context) {
+        return CreatePostSheet(
+          repository: repository,
+          authorId: userId,
+          username: username,
+          profileImageUrl: post.profileImageUrl,
+          existingPost: post,
+        );
+      },
+    );
+
+    if (updated == true && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Post updated.')));
+    }
+  }
 
   Future<void> _openComments(BuildContext context) {
     return showModalBottomSheet<void>(
@@ -134,11 +158,19 @@ class FeedPostCard extends StatelessWidget {
                   color: BeastModeColors.surface,
                   surfaceTintColor: Colors.transparent,
                   onSelected: (value) {
+                    if (value == 'edit') {
+                      _editPost(context);
+                    }
+
                     if (value == 'delete') {
                       _deletePost(context);
                     }
                   },
                   itemBuilder: (context) => const [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Text('Edit Post'),
+                    ),
                     PopupMenuItem<String>(
                       value: 'delete',
                       child: Text('Delete Post'),

@@ -1,3 +1,4 @@
+import 'package:beast_mode_fitness/models/social_post.dart';
 import 'package:beast_mode_fitness/services/social_feed_repository.dart';
 import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'package:flutter/material.dart';
@@ -10,15 +11,22 @@ class CreatePostSheet extends StatefulWidget {
     required this.username,
     required this.profileImageUrl,
     this.workout,
+    this.existingPost,
     this.initialCaption = '',
-  });
+  }) : assert(
+         workout == null || existingPost == null,
+         'Editing and workout-sharing should not be combined.',
+       );
 
   final SocialFeedRepository repository;
   final String authorId;
   final String username;
   final String profileImageUrl;
   final WorkoutShareDetails? workout;
+  final SocialPost? existingPost;
   final String initialCaption;
+
+  bool get isEditing => existingPost != null;
 
   @override
   State<CreatePostSheet> createState() => _CreatePostSheetState();
@@ -31,7 +39,9 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   @override
   void initState() {
     super.initState();
-    _captionController = TextEditingController(text: widget.initialCaption);
+    _captionController = TextEditingController(
+      text: widget.existingPost?.caption ?? widget.initialCaption,
+    );
   }
 
   @override
@@ -44,7 +54,13 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     final caption = _captionController.text.trim();
     if (caption.isEmpty && widget.workout == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a caption before posting.')),
+        SnackBar(
+          content: Text(
+            widget.isEditing
+                ? 'Add a caption before saving changes.'
+                : 'Add a caption before posting.',
+          ),
+        ),
       );
       return;
     }
@@ -53,13 +69,21 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     setState(() => _isSaving = true);
 
     try {
-      await widget.repository.createPost(
-        authorId: widget.authorId,
-        username: widget.username,
-        profileImageUrl: widget.profileImageUrl,
-        caption: caption,
-        workout: widget.workout,
-      );
+      if (widget.existingPost != null) {
+        await widget.repository.updatePost(
+          post: widget.existingPost!,
+          userId: widget.authorId,
+          caption: caption,
+        );
+      } else {
+        await widget.repository.createPost(
+          authorId: widget.authorId,
+          username: widget.username,
+          profileImageUrl: widget.profileImageUrl,
+          caption: caption,
+          workout: widget.workout,
+        );
+      }
 
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -106,7 +130,11 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      widget.workout == null ? 'Create Post' : 'Share Workout',
+                      widget.isEditing
+                          ? 'Edit Post'
+                          : widget.workout == null
+                          ? 'Create Post'
+                          : 'Share Workout',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: BeastModeColors.graphite,
@@ -143,8 +171,18 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
               ],
               FilledButton.icon(
                 onPressed: _isSaving ? null : _submit,
-                icon: const Icon(Icons.send_rounded),
-                label: Text(_isSaving ? 'Posting...' : 'Post'),
+                icon: Icon(
+                  widget.isEditing ? Icons.save_rounded : Icons.send_rounded,
+                ),
+                label: Text(
+                  _isSaving
+                      ? widget.isEditing
+                            ? 'Saving...'
+                            : 'Posting...'
+                      : widget.isEditing
+                      ? 'Save Changes'
+                      : 'Post',
+                ),
               ),
             ],
           ),
