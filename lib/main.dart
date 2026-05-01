@@ -1147,22 +1147,29 @@ class _FeedPostCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 150,
-            width: double.infinity,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD9DDE3),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              'Workout Pic',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+          (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  post.imageUrl!,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Container(
+                height: 150,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD9DDE3),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  'No Image',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
-          ),
           const SizedBox(height: 12),
           Text(
             post.caption,
