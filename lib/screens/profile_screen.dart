@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final stats = _statsController.text.trim();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 126),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -353,7 +353,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );

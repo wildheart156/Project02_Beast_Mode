@@ -877,6 +877,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               bottom: false,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
+                layoutBuilder: (currentChild, previousChildren) {
+                  return Stack(
+                    alignment: Alignment.topCenter,
+                    fit: StackFit.expand,
+                    children: [...previousChildren, ?currentChild],
+                  );
+                },
                 child: KeyedSubtree(
                   key: ValueKey(_selectedIndex),
                   child: pages[_selectedIndex],
