@@ -1,3 +1,4 @@
+import 'package:beast_mode_fitness/models/post.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -1021,7 +1022,6 @@ class _DashboardHome extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
