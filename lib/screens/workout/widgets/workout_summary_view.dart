@@ -10,11 +10,13 @@ class WorkoutSummaryView extends StatelessWidget {
     required this.workout,
     required this.onLogAnotherWorkout,
     required this.onViewHistory,
+    required this.onShareWorkout,
   });
 
   final WorkoutSession? workout;
   final VoidCallback onLogAnotherWorkout;
   final VoidCallback onViewHistory;
+  final Future<void> Function(WorkoutSession workout) onShareWorkout;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +112,20 @@ class WorkoutSummaryView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        FilledButton.icon(
+          onPressed: () => onShareWorkout(workout!),
+          style: FilledButton.styleFrom(
+            backgroundColor: BeastModeColors.graphite,
+            foregroundColor: BeastModeColors.volt,
+            minimumSize: const Size.fromHeight(52),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          icon: const Icon(Icons.ios_share_rounded),
+          label: const Text('Share to Feed'),
+        ),
+        const SizedBox(height: 12),
         FilledButton(
           onPressed: onLogAnotherWorkout,
           style: FilledButton.styleFrom(

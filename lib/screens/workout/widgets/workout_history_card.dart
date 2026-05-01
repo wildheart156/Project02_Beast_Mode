@@ -9,11 +9,13 @@ class WorkoutHistoryCard extends StatelessWidget {
     super.key,
     required this.workout,
     required this.onEditWorkout,
+    required this.onShareWorkout,
     required this.onDeleteWorkout,
   });
 
   final WorkoutSession workout;
   final Future<void> Function() onEditWorkout;
+  final Future<void> Function() onShareWorkout;
   final Future<void> Function() onDeleteWorkout;
 
   @override
@@ -53,6 +55,11 @@ class WorkoutHistoryCard extends StatelessWidget {
               return;
             }
 
+            if (value == 'share') {
+              await onShareWorkout();
+              return;
+            }
+
             if (value == 'delete') {
               final shouldDelete = await showDialog<bool>(
                 context: context,
@@ -87,6 +94,7 @@ class WorkoutHistoryCard extends StatelessWidget {
           },
           itemBuilder: (context) => const [
             PopupMenuItem<String>(value: 'edit', child: Text('Edit Workout')),
+            PopupMenuItem<String>(value: 'share', child: Text('Share to Feed')),
             PopupMenuItem<String>(
               value: 'delete',
               child: Text('Delete Workout'),

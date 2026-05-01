@@ -10,11 +10,13 @@ class WorkoutHistoryView extends StatelessWidget {
     required this.userId,
     required this.repository,
     required this.onEditWorkout,
+    required this.onShareWorkout,
   });
 
   final String userId;
   final WorkoutRepository repository;
   final Future<void> Function(WorkoutSession workout) onEditWorkout;
+  final Future<void> Function(WorkoutSession workout) onShareWorkout;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +54,7 @@ class WorkoutHistoryView extends StatelessWidget {
               child: WorkoutHistoryCard(
                 workout: workout,
                 onEditWorkout: () => onEditWorkout(workout),
+                onShareWorkout: () => onShareWorkout(workout),
                 onDeleteWorkout: () async {
                   try {
                     await repository.deleteWorkout(
