@@ -1,3 +1,4 @@
+import 'package:beast_mode_fitness/models/post.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -951,14 +952,6 @@ class _DashboardHome extends StatelessWidget {
         ? goals!
         : 'Stay consistent this week and keep your momentum moving.';
 
-    const feedItems = [
-      _MockFeedPost(username: 'User123', caption: 'Great session today!'),
-      _MockFeedPost(
-        username: 'LiftQueen',
-        caption: 'Leg day complete. Feeling strong.',
-      ),
-    ];
-
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
       child: Column(
@@ -996,11 +989,41 @@ class _DashboardHome extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                ...feedItems.map((post) => _FeedPostCard(post: post)),
+
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('Posts')
+                      .orderBy('createdAt', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return const Text("Error loading feed");
+                    }
+
+                    final docs = snapshot.data?.docs ?? [];
+
+                    if (docs.isEmpty) {
+                      return const Text("No posts yet.");
+                    }
+
+                    return Column(
+                      children: docs.map((doc) {
+                        final data = doc.data();
+
+                        return _FeedPostCard(
+                          post: Post.fromFirestore(data),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -1195,17 +1218,10 @@ class _TodaysWorkoutCard extends StatelessWidget {
   }
 }
 
-class _MockFeedPost {
-  const _MockFeedPost({required this.username, required this.caption});
-
-  final String username;
-  final String caption;
-}
-
 class _FeedPostCard extends StatelessWidget {
   const _FeedPostCard({required this.post});
 
-  final _MockFeedPost post;
+  final Post post;
 
   @override
   Widget build(BuildContext context) {
