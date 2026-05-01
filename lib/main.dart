@@ -8,7 +8,6 @@ import 'package:beast_mode_fitness/screens/profile_screen.dart';
 import 'package:beast_mode_fitness/screens/workout_screen.dart';
 import 'package:beast_mode_fitness/models/workout_session.dart';
 import 'package:beast_mode_fitness/services/workout_repository.dart';
-import 'package:beast_mode_fitness/models/post.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -871,63 +870,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: KeyedSubtree(
-            key: ValueKey(_selectedIndex),
-            child: pages[_selectedIndex],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-        decoration: BoxDecoration(
-          color: const Color(0xFF959DA8),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 16,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  isSelected: _selectedIndex == 0,
-                  onTap: () => setState(() => _selectedIndex = 0),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: KeyedSubtree(
+                  key: ValueKey(_selectedIndex),
+                  child: pages[_selectedIndex],
                 ),
-                _NavItem(
-                  icon: Icons.add_circle,
-                  label: 'Workout',
-                  isSelected: _selectedIndex == 1,
-                  onTap: () => setState(() => _selectedIndex = 1),
-                ),
-                _NavItem(
-                  icon: Icons.notifications_rounded,
-                  label: 'Alerts',
-                  isSelected: _selectedIndex == 2,
-                  onTap: () => setState(() => _selectedIndex = 2),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isSelected: _selectedIndex == 3,
-                  onTap: () => setState(() => _selectedIndex = 3),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              minimum: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF959DA8),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _NavItem(
+                        icon: Icons.home_rounded,
+                        label: 'Home',
+                        isSelected: _selectedIndex == 0,
+                        onTap: () => setState(() => _selectedIndex = 0),
+                      ),
+                      _NavItem(
+                        icon: Icons.add_circle,
+                        label: 'Workout',
+                        isSelected: _selectedIndex == 1,
+                        onTap: () => setState(() => _selectedIndex = 1),
+                      ),
+                      _NavItem(
+                        icon: Icons.notifications_rounded,
+                        label: 'Alerts',
+                        isSelected: _selectedIndex == 2,
+                        onTap: () => setState(() => _selectedIndex = 2),
+                      ),
+                      _NavItem(
+                        icon: Icons.person_rounded,
+                        label: 'Profile',
+                        isSelected: _selectedIndex == 3,
+                        onTap: () => setState(() => _selectedIndex = 3),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
