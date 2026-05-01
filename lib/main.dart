@@ -8,7 +8,7 @@ import 'package:beast_mode_fitness/screens/profile_screen.dart';
 import 'package:beast_mode_fitness/screens/workout_screen.dart';
 import 'package:beast_mode_fitness/models/workout_session.dart';
 import 'package:beast_mode_fitness/services/workout_repository.dart';
-
+import 'package:beast_mode_fitness/models/post.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -1014,9 +1014,7 @@ class _DashboardHome extends StatelessWidget {
                       children: docs.map((doc) {
                         final data = doc.data();
 
-                        return _FeedPostCard(
-                          post: Post.fromFirestore(data),
-                        );
+                        return _FeedPostCard(post: Post.fromFirestore(data));
                       }).toList(),
                     );
                   },
