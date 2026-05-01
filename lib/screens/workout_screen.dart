@@ -3,6 +3,7 @@ import 'package:beast_mode_fitness/models/workout_exercise_draft.dart';
 import 'package:beast_mode_fitness/models/workout_session.dart';
 import 'package:beast_mode_fitness/services/wger_exercise_service.dart';
 import 'package:beast_mode_fitness/services/workout_repository.dart';
+import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -389,9 +390,16 @@ class _WorkoutHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BeastModeColors.graphite,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD7DCE3)),
+        border: Border.all(color: BeastModeColors.graphiteLight),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 18,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,7 +408,7 @@ class _WorkoutHeader extends StatelessWidget {
             'Workout Logging',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF5B6472),
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 8),
@@ -408,7 +416,7 @@ class _WorkoutHeader extends StatelessWidget {
             'Build a session, finish with a summary, and review your previous workouts here.',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steelLight),
           ),
           const SizedBox(height: 14),
           SegmentedButton<String>(
@@ -422,9 +430,9 @@ class _WorkoutHeader extends StatelessWidget {
             },
             showSelectedIcon: false,
             style: SegmentedButton.styleFrom(
-              foregroundColor: const Color(0xFF5B6472),
-              selectedForegroundColor: Colors.white,
-              selectedBackgroundColor: const Color(0xFF929AA6),
+              foregroundColor: BeastModeColors.steelLight,
+              selectedForegroundColor: BeastModeColors.graphite,
+              selectedBackgroundColor: BeastModeColors.volt,
             ),
           ),
         ],
@@ -499,8 +507,8 @@ class _WorkoutBuilderView extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onAddExercise,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF67707E),
-              side: const BorderSide(color: Color(0xFFC7CCD4)),
+              foregroundColor: BeastModeColors.graphite,
+              side: const BorderSide(color: BeastModeColors.flame),
               minimumSize: const Size.fromHeight(48),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -513,7 +521,7 @@ class _WorkoutBuilderView extends StatelessWidget {
           FilledButton(
             onPressed: isSaving ? null : onFinishWorkout,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF929AA6),
+              backgroundColor: BeastModeColors.flame,
               foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(52),
               shape: RoundedRectangleBorder(
@@ -560,16 +568,25 @@ class _WorkoutFeedbackCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD7DCE3)),
+        border: Border.all(color: BeastModeColors.flameSoft),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Container(
+            width: 54,
+            height: 5,
+            decoration: BoxDecoration(
+              color: BeastModeColors.flame,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 14),
           Text(
             'Live Feedback',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.graphite,
             ),
           ),
           const SizedBox(height: 12),
@@ -577,7 +594,7 @@ class _WorkoutFeedbackCard extends StatelessWidget {
             'Intensity Score: ${intensity.toStringAsFixed(1)}',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.flame,
             ),
           ),
           const SizedBox(height: 6),
@@ -585,7 +602,7 @@ class _WorkoutFeedbackCard extends StatelessWidget {
             'Estimated Calories Burned: $estimatedCaloriesBurned',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.graphite,
             ),
           ),
           const SizedBox(height: 6),
@@ -593,7 +610,7 @@ class _WorkoutFeedbackCard extends StatelessWidget {
             feedback,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
           ),
         ],
       ),
@@ -617,9 +634,9 @@ class _ExerciseDraftCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BeastModeColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD7DCE3)),
+        border: Border.all(color: BeastModeColors.steelLight),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -630,14 +647,14 @@ class _ExerciseDraftCard extends StatelessWidget {
                 'Exercise',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.graphite,
                 ),
               ),
               const Spacer(),
               IconButton(
                 onPressed: onRemove,
                 icon: const Icon(Icons.delete_outline_rounded),
-                color: const Color(0xFF818A98),
+                color: BeastModeColors.flame,
                 tooltip: 'Remove exercise',
               ),
             ],
@@ -661,8 +678,8 @@ class _ExerciseDraftCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onSearch,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF67707E),
-                  side: const BorderSide(color: Color(0xFFC7CCD4)),
+                  foregroundColor: BeastModeColors.graphite,
+                  side: const BorderSide(color: BeastModeColors.steelLight),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 14,
@@ -768,33 +785,42 @@ class _WorkoutSummaryView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: BeastModeColors.surfaceWarm,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFD7DCE3)),
+            border: Border.all(color: BeastModeColors.flameSoft),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                width: 64,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: BeastModeColors.volt,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
               Text(
                 'Workout Complete',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.graphite,
                 ),
               ),
               const SizedBox(height: 10),
               Text(
                 'You logged ${workout!.exerciseCount} exercises with an intensity score of ${workout!.intensityScore.toStringAsFixed(1)}.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF7B8492),
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
               ),
               const SizedBox(height: 4),
               Text(
                 'Estimated Calories Burned: ${workout!.estimatedCaloriesBurned}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.flame,
                 ),
               ),
               const SizedBox(height: 14),
@@ -802,7 +828,7 @@ class _WorkoutSummaryView extends StatelessWidget {
                 workout!.feedback,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.graphite,
                 ),
               ),
             ],
@@ -812,9 +838,9 @@ class _WorkoutSummaryView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: BeastModeColors.surface,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFD7DCE3)),
+            border: Border.all(color: BeastModeColors.steelLight),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,7 +849,7 @@ class _WorkoutSummaryView extends StatelessWidget {
                 'Exercise Breakdown',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF5B6472),
+                  color: BeastModeColors.graphite,
                 ),
               ),
               const SizedBox(height: 14),
@@ -840,7 +866,7 @@ class _WorkoutSummaryView extends StatelessWidget {
         FilledButton(
           onPressed: onLogAnotherWorkout,
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF929AA6),
+            backgroundColor: BeastModeColors.flame,
             foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(
@@ -853,8 +879,8 @@ class _WorkoutSummaryView extends StatelessWidget {
         OutlinedButton(
           onPressed: onViewHistory,
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF67707E),
-            side: const BorderSide(color: Color(0xFFC7CCD4)),
+            foregroundColor: BeastModeColors.graphite,
+            side: const BorderSide(color: BeastModeColors.steelLight),
             minimumSize: const Size.fromHeight(48),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -884,9 +910,9 @@ class _SummaryExerciseTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: BeastModeColors.ash,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE0E4EA)),
+        border: Border.all(color: BeastModeColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -895,7 +921,7 @@ class _SummaryExerciseTile extends StatelessWidget {
             name,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF5B6472),
+              color: BeastModeColors.graphite,
             ),
           ),
           const SizedBox(height: 6),
@@ -903,7 +929,7 @@ class _SummaryExerciseTile extends StatelessWidget {
             '$sets sets • $reps reps • $weight weight',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
           ),
           if (notes != null && notes.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -911,7 +937,7 @@ class _SummaryExerciseTile extends StatelessWidget {
               notes,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+              ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
             ),
           ],
         ],
@@ -1015,9 +1041,9 @@ class _WorkoutHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: BeastModeColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFD7DCE3)),
+        border: Border.all(color: BeastModeColors.steelLight),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -1027,7 +1053,7 @@ class _WorkoutHistoryCard extends StatelessWidget {
           _formatDate(workout.createdAt),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF5B6472),
+            color: BeastModeColors.graphite,
           ),
         ),
         subtitle: Padding(
@@ -1036,7 +1062,7 @@ class _WorkoutHistoryCard extends StatelessWidget {
             '${workout.exerciseCount} exercises • Intensity ${workout.intensityScore.toStringAsFixed(1)} • ${workout.estimatedCaloriesBurned} cal\n${workout.feedback}',
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
           ),
         ),
         trailing: PopupMenuButton<String>(
@@ -1106,9 +1132,9 @@ class _WorkoutMessageCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: BeastModeColors.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFD7DCE3)),
+          border: Border.all(color: BeastModeColors.steelLight),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1118,7 +1144,7 @@ class _WorkoutMessageCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF5B6472),
+                color: BeastModeColors.graphite,
               ),
             ),
             const SizedBox(height: 10),
@@ -1127,7 +1153,7 @@ class _WorkoutMessageCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF7B8492)),
+              ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
             ),
           ],
         ),
@@ -1203,7 +1229,7 @@ class _ExerciseSearchSheetState extends State<_ExerciseSearchSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xFFF3F4F6),
+            color: BeastModeColors.ash,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Padding(
@@ -1214,7 +1240,7 @@ class _ExerciseSearchSheetState extends State<_ExerciseSearchSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC7CCD4),
+                    color: BeastModeColors.steelLight,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -1223,7 +1249,7 @@ class _ExerciseSearchSheetState extends State<_ExerciseSearchSheet> {
                   'Search Exercises',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF5B6472),
+                    color: BeastModeColors.graphite,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1245,7 +1271,7 @@ class _ExerciseSearchSheetState extends State<_ExerciseSearchSheet> {
                             _error!,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF7B8492)),
+                                ?.copyWith(color: BeastModeColors.steel),
                           ),
                         )
                       : _results.isEmpty
@@ -1253,7 +1279,7 @@ class _ExerciseSearchSheetState extends State<_ExerciseSearchSheet> {
                           child: Text(
                             'No matching exercises found.',
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF7B8492)),
+                                ?.copyWith(color: BeastModeColors.steel),
                           ),
                         )
                       : ListView.separated(

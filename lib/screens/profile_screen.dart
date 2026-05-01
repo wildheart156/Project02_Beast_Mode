@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -113,15 +114,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: BeastModeColors.graphite,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFD7DCE3)),
+              border: Border.all(color: BeastModeColors.graphiteLight),
             ),
             child: Row(
               children: [
                 const CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFFD0D5DD),
+                  backgroundColor: BeastModeColors.flame,
                   child: Icon(Icons.person, size: 30, color: Colors.white),
                 ),
                 const SizedBox(width: 14),
@@ -133,14 +134,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         displayName,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF5B6472),
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         widget.user.email ?? '',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF7B8492),
+                          color: BeastModeColors.steelLight,
                         ),
                       ),
                     ],
@@ -153,9 +154,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: BeastModeColors.surface,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFD7DCE3)),
+              border: Border.all(color: BeastModeColors.steelLight),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -172,14 +173,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF5B6472),
+                                  color: BeastModeColors.graphite,
                                 ),
                           ),
                           const SizedBox(height: 10),
                           Text(
                             'Keep your profile updated so your dashboard and future recommendations stay relevant.',
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFF7B8492)),
+                                ?.copyWith(color: BeastModeColors.steel),
                           ),
                         ],
                       ),
@@ -194,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               });
                             },
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF67707E),
+                        foregroundColor: BeastModeColors.flame,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 8,
@@ -263,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             FilledButton(
                               onPressed: _isSaving ? null : _saveProfile,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF929AA6),
+                                backgroundColor: BeastModeColors.flame,
                                 foregroundColor: Colors.white,
                                 minimumSize: const Size.fromHeight(52),
                                 shape: RoundedRectangleBorder(
@@ -323,9 +324,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: BeastModeColors.surface,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFD7DCE3)),
+              border: Border.all(color: BeastModeColors.steelLight),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +335,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Account',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF5B6472),
+                    color: BeastModeColors.graphite,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -342,8 +343,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () => FirebaseAuth.instance.signOut(),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
-                    foregroundColor: const Color(0xFF67707E),
-                    side: const BorderSide(color: Color(0xFFC7CCD4)),
+                    foregroundColor: BeastModeColors.graphite,
+                    side: const BorderSide(color: BeastModeColors.steelLight),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -374,14 +375,14 @@ class _ProfileField extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF7B8492),
+            color: BeastModeColors.flame,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           value,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF5B6472),
+            color: BeastModeColors.graphite,
             height: 1.45,
           ),
         ),
