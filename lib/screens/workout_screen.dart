@@ -22,9 +22,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   final List<WorkoutExerciseDraft> _drafts = [];
 
   _WorkoutView _view = _WorkoutView.builder;
+  _WorkoutView _lastNonHistoryView = _WorkoutView.builder;
   bool _isSaving = false;
   bool _isHydratingDrafts = false;
   WorkoutSession? _latestWorkout;
+
+  void _setActiveView(_WorkoutView view) {
+    setState(() {
+      _view = view;
+      if (view != _WorkoutView.history) {
+        _lastNonHistoryView = view;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -173,6 +183,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           feedback: feedback,
         );
         _view = _WorkoutView.summary;
+        _lastNonHistoryView = _WorkoutView.summary;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -211,6 +222,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _drafts.clear();
       _latestWorkout = null;
       _view = _WorkoutView.builder;
+      _lastNonHistoryView = _WorkoutView.builder;
     });
   }
 
@@ -247,6 +259,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ..addAll(hydratedDrafts);
         _latestWorkout = workout;
         _view = _WorkoutView.builder;
+        _lastNonHistoryView = _WorkoutView.builder;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -307,13 +320,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             _WorkoutHeader(
               selectedValue: _view == _WorkoutView.history ? 'history' : 'new',
               onValueChanged: (value) {
-                setState(() {
-                  _view = value == 'history'
-                      ? _WorkoutView.history
-                      : (_latestWorkout != null && _view == _WorkoutView.summary
-                            ? _WorkoutView.summary
-                            : _WorkoutView.builder);
-                });
+                if (value == 'history') {
+                  _setActiveView(_WorkoutView.history);
+                  return;
+                }
+
+                _setActiveView(_lastNonHistoryView);
               },
             ),
             const SizedBox(height: 14),
@@ -344,7 +356,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                           workout: _latestWorkout,
                           onLogAnotherWorkout: _resetWorkout,
                           onViewHistory: () {
-                            setState(() => _view = _WorkoutView.history);
+                            _setActiveView(_WorkoutView.history);
                           },
                         ),
                         _WorkoutView.history => _WorkoutHistoryView(
