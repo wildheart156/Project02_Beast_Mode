@@ -3,6 +3,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+
+
+class _ReminderTile extends StatelessWidget {
+  const _ReminderTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: BeastModeColors.flameSoft,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: BeastModeColors.flame),
+      ),
+      child: Row(
+        children: const [
+          Icon(Icons.warning_amber_rounded, color: BeastModeColors.flame),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "You haven’t worked out today. Stay consistent 💪",
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class NotificationsScreen extends StatelessWidget {
   final String title;
   final String description;
@@ -15,9 +45,12 @@ class NotificationsScreen extends StatelessWidget {
     required this.icon,
   });
 
+  
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser!;
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
@@ -33,6 +66,18 @@ class NotificationsScreen extends StatelessWidget {
           }
 
           final docs = snapshot.data!.docs;
+          final today = DateTime.now();
+          final startOfDay = DateTime(today.year, today.month, today.day);
+
+          bool workedOutToday = docs.any((doc) {
+            final data = doc.data();
+
+            if (data['createdAt'] == null) return false;
+
+            final date = (data['createdAt'] as Timestamp).toDate();
+
+            return date.isAfter(startOfDay) && data['type'] == 'workout';
+          });
 
           if (docs.isEmpty) {
             return _NotificationEmptyState(
@@ -44,13 +89,19 @@ class NotificationsScreen extends StatelessWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 126),
-            itemCount: docs.length + 1,
+            itemCount: docs.length + (workedOutToday ? 1 : 2),
             itemBuilder: (context, i) {
               if (i == 0) {
                 return const _NotificationHeader();
               }
 
-              final data = docs[i - 1].data();
+              // Reminder tile (only if no workout today)
+              if (!workedOutToday && i == 1) {
+                return const _ReminderTile();
+              }
+
+              // Adjust index depending on reminder
+              final data = docs[i - (workedOutToday ? 1 : 2)].data();
               return _NotificationTile(
                 message: data['message'] ?? '',
                 type: data['type'] ?? '',
