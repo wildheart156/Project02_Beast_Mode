@@ -3,36 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-
-
-class _ReminderTile extends StatelessWidget {
-  const _ReminderTile();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: BeastModeColors.flameSoft,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: BeastModeColors.flame),
-      ),
-      child: Row(
-        children: const [
-          Icon(Icons.warning_amber_rounded, color: BeastModeColors.flame),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              "You haven’t worked out today. Stay consistent 💪",
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 class NotificationsScreen extends StatelessWidget {
   final String title;
   final String description;
@@ -45,12 +15,9 @@ class NotificationsScreen extends StatelessWidget {
     required this.icon,
   });
 
-  
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser!;
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
@@ -60,57 +27,57 @@ class NotificationsScreen extends StatelessWidget {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        final body = () {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          final docs = snapshot.data!.docs;
-          final today = DateTime.now();
-          final startOfDay = DateTime(today.year, today.month, today.day);
+        final docs = snapshot.data!.docs;
 
-          bool workedOutToday = docs.any((doc) {
-            final data = doc.data();
+        //Check if user worked out today
+        final today = DateTime.now();
+        final startOfDay = DateTime(today.year, today.month, today.day);
 
-            if (data['createdAt'] == null) return false;
+        bool workedOutToday = docs.any((doc) {
+          final data = doc.data();
 
-            final date = (data['createdAt'] as Timestamp).toDate();
+          if (data['createdAt'] == null) return false;
 
-            return date.isAfter(startOfDay) && data['type'] == 'workout';
-          });
+          final date = (data['createdAt'] as Timestamp).toDate();
 
-          if (docs.isEmpty) {
-            return _NotificationEmptyState(
-              title: title,
-              description: description,
-              icon: icon,
-            );
-          }
+          return date.isAfter(startOfDay) && data['type'] == 'workout';
+        });
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 126),
-            itemCount: docs.length + (workedOutToday ? 1 : 2),
-            itemBuilder: (context, i) {
-              if (i == 0) {
-                return const _NotificationHeader();
-              }
-
-              // Reminder tile (only if no workout today)
-              if (!workedOutToday && i == 1) {
-                return const _ReminderTile();
-              }
-
-              // Adjust index depending on reminder
-              final data = docs[i - (workedOutToday ? 1 : 2)].data();
-              return _NotificationTile(
-                message: data['message'] ?? '',
-                type: data['type'] ?? '',
-              );
-            },
+        if (docs.isEmpty) {
+          return _NotificationEmptyState(
+            title: title,
+            description: description,
+            icon: icon,
           );
-        }();
+        }
 
-        return body;
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 126),
+          itemCount: docs.length + (workedOutToday ? 1 : 2),
+          itemBuilder: (context, i) {
+            if (i == 0) {
+              return const _NotificationHeader();
+            }
+
+            //Show reminder if no workout today
+            if (!workedOutToday && i == 1) {
+              return const _ReminderTile();
+            }
+
+            final data = docs[i - (workedOutToday ? 1 : 2)].data();
+
+            return _NotificationTile(
+              message: data['message'] ?? '',
+              type: data['type'] ?? '',
+              timestamp: data['createdAt'] ?? Timestamp.now(),
+              workoutType: data['workoutType'],
+            );
+          },
+        );
       },
     );
   }
@@ -160,6 +127,36 @@ class _NotificationHeader extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _ReminderTile extends StatelessWidget {
+  const _ReminderTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: BeastModeColors.flameSoft,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: BeastModeColors.flame),
+      ),
+      child: Row(
+        children: const [
+          Icon(Icons.warning_amber_rounded, color: BeastModeColors.flame),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "You haven’t worked out today. Stay consistent 💪",
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -224,10 +221,35 @@ class _NotificationEmptyState extends StatelessWidget {
 }
 
 class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({required this.message, required this.type});
+  const _NotificationTile({
+    required this.message,
+    required this.type,
+    required this.timestamp,
+    this.workoutType,
+  });
 
   final String message;
   final String type;
+  final Timestamp timestamp;
+  final String? workoutType;
+
+  IconData _getIcon() {
+    switch (type) {
+      case 'workout':
+        return Icons.fitness_center;
+      case 'reminder':
+        return Icons.notifications_active;
+      case 'progress':
+        return Icons.trending_up;
+      default:
+        return Icons.bolt_rounded;
+    }
+  }
+
+  String _formatDate() {
+    final date = timestamp.toDate();
+    return "${date.month}/${date.day} • ${date.hour}:${date.minute.toString().padLeft(2, '0')}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +265,7 @@ class _NotificationTile extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundColor: BeastModeColors.flameSoft,
-            child: const Icon(Icons.bolt_rounded, color: BeastModeColors.flame),
+            child: Icon(_getIcon(), color: BeastModeColors.flame),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -257,15 +279,25 @@ class _NotificationTile extends StatelessWidget {
                     color: BeastModeColors.graphite,
                   ),
                 ),
-                if (type.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                const SizedBox(height: 4),
+
+                if (workoutType != null)
                   Text(
-                    type,
+                    workoutType!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: BeastModeColors.steel,
+                      color: BeastModeColors.flame,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
+
+                const SizedBox(height: 4),
+
+                Text(
+                  _formatDate(),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: BeastModeColors.steel),
+                ),
               ],
             ),
           ),
