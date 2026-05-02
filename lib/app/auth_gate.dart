@@ -1,6 +1,7 @@
 import 'package:beast_mode_fitness/screens/auth/auth_screen.dart';
 import 'package:beast_mode_fitness/screens/auth/profile_setup_screen.dart';
 import 'package:beast_mode_fitness/screens/dashboard/dashboard_screen.dart';
+import 'package:beast_mode_fitness/services/push_notification_service.dart';
 import 'package:beast_mode_fitness/shared/widgets/loading_scaffold.dart';
 import 'package:beast_mode_fitness/shared/widgets/status_scaffold.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,41 +22,82 @@ class AuthGate extends StatelessWidget {
 
         final user = authSnapshot.data;
         if (user == null) {
+          PushNotificationService.instance.clearActiveUser();
           return const AuthScreen();
         }
 
-        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('Users')
-              .doc(user.uid)
-              .snapshots(),
-          builder: (context, profileSnapshot) {
-            if (profileSnapshot.hasError) {
-              return StatusScaffold(
-                title: 'Profile Unavailable',
-                message:
-                    'We signed you in, but your profile could not be loaded yet.',
-                actionLabel: 'Log Out',
-                onPressed: () => FirebaseAuth.instance.signOut(),
+        return _NotificationSessionBinder(
+          user: user,
+          child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('Users')
+                .doc(user.uid)
+                .snapshots(),
+            builder: (context, profileSnapshot) {
+              if (profileSnapshot.hasError) {
+                return StatusScaffold(
+                  title: 'Profile Unavailable',
+                  message:
+                      'We signed you in, but your profile could not be loaded yet.',
+                  actionLabel: 'Log Out',
+                  onPressed: () => FirebaseAuth.instance.signOut(),
+                );
+              }
+
+              if (profileSnapshot.connectionState == ConnectionState.waiting) {
+                return const LoadingScaffold(message: 'Loading your profile...');
+              }
+
+              final document = profileSnapshot.data;
+              if (document == null || !document.exists) {
+                return ProfileSetupScreen(user: user);
+              }
+
+              return DashboardScreen(
+                user: user,
+                profile: document.data() ?? <String, dynamic>{},
               );
-            }
-
-            if (profileSnapshot.connectionState == ConnectionState.waiting) {
-              return const LoadingScaffold(message: 'Loading your profile...');
-            }
-
-            final document = profileSnapshot.data;
-            if (document == null || !document.exists) {
-              return ProfileSetupScreen(user: user);
-            }
-
-            return DashboardScreen(
-              user: user,
-              profile: document.data() ?? <String, dynamic>{},
-            );
-          },
+            },
+          ),
         );
       },
     );
+  }
+}
+
+class _NotificationSessionBinder extends StatefulWidget {
+  const _NotificationSessionBinder({
+    required this.user,
+    required this.child,
+  });
+
+  final User user;
+  final Widget child;
+
+  @override
+  State<_NotificationSessionBinder> createState() =>
+      _NotificationSessionBinderState();
+}
+
+class _NotificationSessionBinderState extends State<_NotificationSessionBinder> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService.instance.activateForUser(widget.user.uid);
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _NotificationSessionBinder oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.uid != widget.user.uid) {
+      PushNotificationService.instance.activateForUser(widget.user.uid);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

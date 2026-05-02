@@ -1,4 +1,5 @@
 import 'package:beast_mode_fitness/app/auth_gate.dart';
+import 'package:beast_mode_fitness/app/app_navigation.dart';
 import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,8 @@ class BeastModeApp extends StatelessWidget {
     return MaterialApp(
       title: 'Beast Mode',
       debugShowCheckedModeBanner: false,
+      navigatorKey: rootNavigatorKey,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: BeastModeColors.ash,
