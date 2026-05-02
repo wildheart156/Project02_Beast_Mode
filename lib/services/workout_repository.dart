@@ -16,6 +16,13 @@ class WorkoutRepository {
         .doc(userId)
         .collection('Workouts')
         .doc();
+    final firstExercise = workout.exercises.isNotEmpty
+        ? workout.exercises.first
+        : const <String, dynamic>{};
+    final workoutType =
+        (firstExercise['name'] as String?)?.trim().isNotEmpty == true
+        ? (firstExercise['name'] as String).trim()
+        : 'Workout';
 
     await workoutRef.set(workout.toFirestoreMap());
 
@@ -26,6 +33,7 @@ class WorkoutRepository {
         .add({
           'message': 'Workout completed',
           'type': 'workout',
+          'workoutType': workoutType,
           'workoutId': workoutRef.id,
           'createdAt': FieldValue.serverTimestamp(),
         });
