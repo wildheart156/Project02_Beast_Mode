@@ -136,28 +136,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         );
       }
 
-      // Create notification after workout is saved
-      try {
-        // Determine workout type 
-        String workoutType = 'Workout';
-        if (exercises.isNotEmpty) {
-          workoutType = exercises.first['name'] ?? 'Workout';
-        }
-
-        await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(user.uid)
-            .collection('Notifications')
-            .add({
-              'message': '$workoutType completed 💪',
-              'type': 'workout',
-              'workoutType': workoutType,
-              'createdAt': Timestamp.now(),
-            });
-      } catch (e) {
-        debugPrint('Failed to create notification: $e');
-      }
-
       if (!mounted) {
         return;
       }
