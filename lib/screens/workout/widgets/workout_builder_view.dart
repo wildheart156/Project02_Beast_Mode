@@ -71,7 +71,7 @@ class WorkoutBuilderView extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onAddExercise,
             style: OutlinedButton.styleFrom(
-              foregroundColor: BeastModeColors.graphite,
+              foregroundColor: context.beastModeTextColor,
               side: const BorderSide(color: BeastModeColors.flame),
               minimumSize: const Size.fromHeight(48),
               shape: RoundedRectangleBorder(

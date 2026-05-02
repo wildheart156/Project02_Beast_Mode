@@ -4,6 +4,7 @@ import 'package:beast_mode_fitness/screens/notifications_screen.dart';
 import 'package:beast_mode_fitness/screens/profile_screen.dart';
 import 'package:beast_mode_fitness/screens/workout_screen.dart';
 import 'package:beast_mode_fitness/shared/widgets/beast_mode_brand_header.dart';
+import 'package:beast_mode_fitness/shared/widgets/theme_toggle_button.dart';
 import 'package:beast_mode_fitness/theme/beast_mode_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -52,13 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const BeastModeBrandHeader(compact: true),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.menu_rounded),
-            tooltip: 'Menu',
-          ),
-        ],
+        actions: const [ThemeToggleButton()],
       ),
       body: Stack(
         children: [

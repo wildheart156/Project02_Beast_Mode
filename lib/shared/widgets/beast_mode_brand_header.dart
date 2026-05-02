@@ -14,7 +14,7 @@ class BeastModeBrandHeader extends StatelessWidget {
                 ? Theme.of(context).textTheme.titleMedium
                 : Theme.of(context).textTheme.headlineMedium)
             ?.copyWith(
-              color: BeastModeColors.graphite,
+              color: context.beastModeTextColor,
               fontWeight: FontWeight.w900,
               letterSpacing: 0,
               height: 0.95,

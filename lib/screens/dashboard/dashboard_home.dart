@@ -37,15 +37,15 @@ class DashboardHome extends StatelessWidget {
             'Welcome back, $displayName',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: BeastModeColors.graphite,
+              color: context.beastModeTextColor,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: BeastModeColors.steel),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.beastModeMutedTextColor,
+            ),
           ),
           const SizedBox(height: 18),
           TodaysWorkoutCard(userId: userId, onOpenWorkoutTab: onOpenWorkoutTab),
