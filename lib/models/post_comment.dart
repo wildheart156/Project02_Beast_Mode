@@ -27,6 +27,7 @@ class PostComment {
   factory PostComment.fromMap(Map<String, dynamic> data, String id) {
     final timestamp = data['createdAt'];
 
+    // Accept both Firestore Timestamps and plain DateTimes for tests
     return PostComment(
       id: id,
       authorId: (data['authorId'] as String?) ?? '',

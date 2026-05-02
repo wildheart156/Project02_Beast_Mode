@@ -11,11 +11,13 @@ class WorkoutRepository {
     required String userId,
     required WorkoutSession workout,
   }) async {
+    // Workouts live under each user so history queries stay user-scoped
     final workoutRef = _firestore
         .collection('Users')
         .doc(userId)
         .collection('Workouts')
         .doc();
+    // Store a friendly workout label on the notification for push copy
     final firstExercise = workout.exercises.isNotEmpty
         ? workout.exercises.first
         : const <String, dynamic>{};
@@ -26,6 +28,7 @@ class WorkoutRepository {
 
     await workoutRef.set(workout.toFirestoreMap());
 
+    // Creating this document triggers the Cloud Function that sends FCM pushes
     await _firestore
         .collection('Users')
         .doc(userId)
@@ -45,6 +48,7 @@ class WorkoutRepository {
     required String userId,
     required WorkoutSession workout,
   }) async {
+    // Merge keeps immutable fields like createdAt intact while replacing the editable workout summary
     await _firestore
         .collection('Users')
         .doc(userId)
@@ -75,6 +79,7 @@ class WorkoutRepository {
   }
 
   Stream<List<WorkoutSession>> workoutHistory(String userId) {
+    // Firestore snapshots keep history live without manual refresh
     return _firestore
         .collection('Users')
         .doc(userId)
@@ -93,6 +98,7 @@ class WorkoutRepository {
     final startOfDay = DateTime(now.year, now.month, now.day);
     final startOfNextDay = startOfDay.add(const Duration(days: 1));
 
+    // Query by local day bounds because Firestore stores createdAt as a Timestamp
     return _firestore
         .collection('Users')
         .doc(userId)

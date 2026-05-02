@@ -30,6 +30,7 @@ class WorkoutExerciseDraft {
   String get notes => notesController.text.trim();
 
   bool get hasMeaningfulContent =>
+      // Used by live calculations to ignore untouched placeholder rows
       name.isNotEmpty ||
       setsController.text.trim().isNotEmpty ||
       repsController.text.trim().isNotEmpty ||
@@ -37,6 +38,7 @@ class WorkoutExerciseDraft {
       notes.isNotEmpty;
 
   Map<String, dynamic> toMap() {
+    // This shape is stored directly inside each workout document
     return {
       'name': name,
       'apiExerciseId': apiExerciseId,

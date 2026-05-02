@@ -6,6 +6,7 @@ class WorkoutCalculator {
   static double calculateIntensity(List<WorkoutExerciseDraft> drafts) {
     double totalVolume = 0;
     for (final draft in drafts) {
+      // Bodyweight exercises still count by using one pound as the minimum load
       totalVolume +=
           draft.sets * draft.reps * (draft.weight <= 0 ? 1 : draft.weight);
     }
@@ -20,10 +21,12 @@ class WorkoutCalculator {
       final reps = (exercise['reps'] as num?)?.toDouble() ?? 0;
       final rawWeight = (exercise['weight'] as num?)?.toDouble() ?? 0;
       final effectiveWeight = rawWeight <= 0 ? 1 : rawWeight;
+      // Volume is scaled down to a rough calorie estimate for simple feedback
       final volumeScore = (sets * reps * effectiveWeight) / 25;
       baseCalories += volumeScore < 3 ? 3 : volumeScore;
     }
 
+    // Add a small per-exercise bonus so varied sessions are represented
     final workoutBonus = exercises.length * 8;
     return (baseCalories + workoutBonus).round();
   }

@@ -14,6 +14,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
+      // Auth state is the root switch: signed-out users see auth, signed-in users continue to profile loading
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
@@ -22,6 +23,7 @@ class AuthGate extends StatelessWidget {
 
         final user = authSnapshot.data;
         if (user == null) {
+          // Prevent token refreshes from being written after sign-out
           PushNotificationService.instance.clearActiveUser();
           return const AuthScreen();
         }
@@ -29,6 +31,7 @@ class AuthGate extends StatelessWidget {
         return _NotificationSessionBinder(
           user: user,
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            // The user document doubles as the profile-complete flag.
             stream: FirebaseFirestore.instance
                 .collection('Users')
                 .doc(user.uid)
@@ -45,7 +48,9 @@ class AuthGate extends StatelessWidget {
               }
 
               if (profileSnapshot.connectionState == ConnectionState.waiting) {
-                return const LoadingScaffold(message: 'Loading your profile...');
+                return const LoadingScaffold(
+                  message: 'Loading your profile...',
+                );
               }
 
               final document = profileSnapshot.data;
@@ -66,10 +71,7 @@ class AuthGate extends StatelessWidget {
 }
 
 class _NotificationSessionBinder extends StatefulWidget {
-  const _NotificationSessionBinder({
-    required this.user,
-    required this.child,
-  });
+  const _NotificationSessionBinder({required this.user, required this.child});
 
   final User user;
   final Widget child;
@@ -79,11 +81,13 @@ class _NotificationSessionBinder extends StatefulWidget {
       _NotificationSessionBinderState();
 }
 
-class _NotificationSessionBinderState extends State<_NotificationSessionBinder> {
+class _NotificationSessionBinderState
+    extends State<_NotificationSessionBinder> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Ask for notification permission and persist this user's FCM token after the first frame so routing is mounted
       PushNotificationService.instance.activateForUser(widget.user.uid);
     });
   }
@@ -92,6 +96,7 @@ class _NotificationSessionBinderState extends State<_NotificationSessionBinder> 
   void didUpdateWidget(covariant _NotificationSessionBinder oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.user.uid != widget.user.uid) {
+      // Re-bind token writes if FirebaseAuth swaps to another account
       PushNotificationService.instance.activateForUser(widget.user.uid);
     }
   }

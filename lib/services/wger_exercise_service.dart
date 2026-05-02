@@ -19,6 +19,7 @@ class WgerExerciseService {
     }
 
     final filtered = exercises.where((exercise) {
+      // Search locally after the first API load to keep typing responsive
       final name = exercise.name.toLowerCase();
       final category = exercise.category?.toLowerCase() ?? '';
       return name.contains(normalizedQuery) ||
@@ -46,6 +47,7 @@ class WgerExerciseService {
     }
 
     final decoded = jsonDecode(response.body);
+    // The API response is defensive-parsed so unexpected shapes become empty lists
     final results = decoded is Map<String, dynamic>
         ? (decoded['results'] as List? ?? const <dynamic>[])
         : const <dynamic>[];

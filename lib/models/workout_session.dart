@@ -32,6 +32,7 @@ class WorkoutSession {
       'estimatedCaloriesBurned': estimatedCaloriesBurned,
       'feedback': feedback,
       'source': source,
+      // Server time keeps ordering consistent across devices
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -42,6 +43,7 @@ class WorkoutSession {
     final data = document.data() ?? <String, dynamic>{};
     final timestamp = data['createdAt'];
 
+    // Firestore may return sparse data during tests or older documents, so each field has a safe default
     return WorkoutSession(
       id: document.id,
       userId: (data['userId'] as String?) ?? '',

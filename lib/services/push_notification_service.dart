@@ -11,9 +11,8 @@ import 'package:flutter/material.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Background FCM handlers run in their own isolate and need Firebase set up.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 
 class PushNotificationService {
@@ -33,6 +32,7 @@ class PushNotificationService {
       return;
     }
 
+    // iOS/macOS need presentation options for notifications while foregrounded.
     await _messaging.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
@@ -42,6 +42,7 @@ class PushNotificationService {
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
+    // If a notification launched the app from a terminated state, route after the navigator exists
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -56,6 +57,7 @@ class PushNotificationService {
     await initialize();
     _activeUserId = userId;
 
+    // Permission is requested only once the app knows which user owns the token
     final settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
@@ -73,6 +75,7 @@ class PushNotificationService {
     final token = await _messaging.getToken();
     if (token != null) {
       debugPrint('FCM token: $token');
+      // Tokens are stored per user so Cloud Functions can fan out pushes
       await _saveToken(userId, token);
     } else {
       debugPrint('FCM token was null.');
@@ -85,6 +88,7 @@ class PushNotificationService {
       }
 
       debugPrint('FCM token refreshed: $token');
+      // Refreshes can happen anytime; write against the latest signed-in user
       unawaited(_saveToken(activeUserId, token));
     });
   }
@@ -94,6 +98,7 @@ class PushNotificationService {
   }
 
   Future<void> _saveToken(String userId, String token) async {
+    // Use the token as the document id to make duplicate registration idempotent
     await _firestore
         .collection('Users')
         .doc(userId)
@@ -119,6 +124,7 @@ class PushNotificationService {
       return;
     }
 
+    // Foreground pushes become an in-app snackbar with the same destination
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -133,6 +139,7 @@ class PushNotificationService {
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {
+    // All current push types land in the notification center
     _openNotificationsScreen();
   }
 
@@ -145,7 +152,8 @@ class PushNotificationService {
     final route = MaterialPageRoute<void>(
       builder: (context) => const NotificationsScreen(
         title: 'Notifications',
-        description: 'Alerts, reminders, and feedback updates will appear here.',
+        description:
+            'Alerts, reminders, and feedback updates will appear here.',
         icon: Icons.notifications_none_rounded,
       ),
     );

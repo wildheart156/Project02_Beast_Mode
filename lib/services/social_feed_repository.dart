@@ -19,6 +19,7 @@ class WorkoutShareDetails {
   final List<String> exerciseNames;
 
   factory WorkoutShareDetails.fromWorkout(WorkoutSession workout) {
+    // Flatten workout data into feed-safe fields so posts do not depend on reading the original workout document later
     return WorkoutShareDetails(
       workoutId: workout.id,
       exerciseCount: workout.exerciseCount,
@@ -42,6 +43,7 @@ class SocialFeedRepository {
       _firestore.collection('Posts');
 
   Stream<List<SocialPost>> posts() {
+    // The feed listens to the top-level Posts collection in reverse chronology
     return _posts
         .orderBy('createdAt', descending: true)
         .snapshots()
@@ -53,6 +55,7 @@ class SocialFeedRepository {
   }
 
   Stream<bool> isLikedByUser({required String postId, required String userId}) {
+    // One like document per user makes the current user's liked state cheap
     return _posts
         .doc(postId)
         .collection('Likes')
@@ -62,6 +65,7 @@ class SocialFeedRepository {
   }
 
   Stream<List<PostComment>> comments(String postId) {
+    // Comments stay as a subcollection to avoid growing the post document
     return _posts
         .doc(postId)
         .collection('Comments')
@@ -83,6 +87,7 @@ class SocialFeedRepository {
   }) async {
     final postRef = _posts.doc();
 
+    // Optional workout fields are denormalized into the post for fast feed cards
     await postRef.set({
       'authorId': authorId,
       'username': username,
@@ -136,6 +141,7 @@ class SocialFeedRepository {
     final postRef = _posts.doc(postId);
     final likeRef = postRef.collection('Likes').doc(userId);
 
+    // Transaction keeps the like document and aggregate counter in sync
     await _firestore.runTransaction((transaction) async {
       final likeSnapshot = await transaction.get(likeRef);
       final postSnapshot = await transaction.get(postRef);
@@ -176,6 +182,7 @@ class SocialFeedRepository {
     final commentRef = postRef.collection('Comments').doc();
     final batch = _firestore.batch();
 
+    // Batch the comment write with the counter update so the feed count matches
     batch.set(commentRef, {
       'authorId': authorId,
       'username': username,
@@ -224,6 +231,7 @@ class SocialFeedRepository {
     final commentRef = postRef.collection('Comments').doc(comment.id);
     final batch = _firestore.batch();
 
+    // Delete and decrement together to keep aggregate counts from drifting
     batch.delete(commentRef);
     batch.update(postRef, {
       'commentCount': FieldValue.increment(-1),

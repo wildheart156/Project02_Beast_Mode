@@ -7,6 +7,7 @@ admin.initializeApp();
 exports.sendNotificationPush = onDocumentCreated(
   "Users/{userId}/Notifications/{notificationId}",
   async (event) => {
+    // Any notification document created by the app becomes a push candidate
     const snapshot = event.data;
     if (!snapshot) {
       logger.warn("Notification trigger fired without snapshot data.");
@@ -15,6 +16,7 @@ exports.sendNotificationPush = onDocumentCreated(
 
     const userId = event.params.userId;
     const notification = snapshot.data() || {};
+    // FCM tokens are written by the Flutter client under the signed-in user
     const tokensSnapshot = await admin
       .firestore()
       .collection("Users")
@@ -34,6 +36,7 @@ exports.sendNotificationPush = onDocumentCreated(
     const title = buildTitle(notification);
     const body = buildBody(notification);
 
+    // Include both notification UI copy and data payload for tap routing
     const message = {
       tokens,
       notification: {
@@ -65,6 +68,7 @@ exports.sendNotificationPush = onDocumentCreated(
     const response = await admin.messaging().sendEachForMulticast(message);
     const invalidTokenDeletes = [];
 
+    // Remove dead tokens so future sends do less work and log less noise
     response.responses.forEach((result, index) => {
       if (result.success) {
         return;

@@ -95,6 +95,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _isSaving = true);
 
+    // Only complete exercises are persisted; partial draft rows stay local
     final exercises = _drafts
         .where(
           (draft) =>
@@ -108,6 +109,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final feedback = WorkoutCalculator.getFeedback(intensity);
 
     try {
+      // When the builder was opened from history, finishing saves over that workout instead of creating a duplicate session
       final editingWorkoutId =
           _latestWorkout != null && _view == WorkoutView.builder
           ? _latestWorkout!.id
@@ -197,6 +199,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     setState(() => _isHydratingDrafts = true);
 
     try {
+      // Replace current controllers with fresh ones hydrated from Firestore data.
       for (final draft in _drafts) {
         draft.dispose();
       }
@@ -272,6 +275,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         .doc(user.uid)
         .get();
     final profileData = profile.data() ?? <String, dynamic>{};
+    // Prefer the Firestore profile name, then FirebaseAuth display/email
     final username =
         ((profileData['username'] as String?)?.trim().isNotEmpty == true)
         ? (profileData['username'] as String).trim()
@@ -295,6 +299,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           authorId: user.uid,
           username: username,
           profileImageUrl: profileImageUrl,
+          // Share a summary snapshot so the feed post stays stable if edited
           workout: WorkoutShareDetails.fromWorkout(workout),
           initialCaption:
               'Logged ${workout.exerciseCount} exercises and burned about ${workout.estimatedCaloriesBurned} calories.',

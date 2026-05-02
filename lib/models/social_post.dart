@@ -60,6 +60,7 @@ class SocialPost {
     final createdAt = _readDate(data['createdAt']);
     final updatedAt = _readDate(data['updatedAt']);
 
+    // Keep parsing tolerant so older Firestore documents still render
     return SocialPost(
       id: id,
       authorId: (data['authorId'] as String?) ?? '',
@@ -87,6 +88,7 @@ class SocialPost {
   }
 
   static DateTime _readDate(Object? value) {
+    // Tests may pass DateTime, while Firestore snapshots pass Timestamp
     if (value is Timestamp) {
       return value.toDate();
     }
